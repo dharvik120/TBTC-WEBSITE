@@ -50,7 +50,7 @@ export default function MyAccountClient({ user }: MyAccountClientProps) {
       if (data.error) {
         setError(data.error);
       } else {
-        setProfileImage(data.filePath);
+        setProfileImage(data.filePath || data.url);
         setSuccess("Profile avatar uploaded! Click 'Save Profile Changes' to apply.");
       }
     } catch (err) {
