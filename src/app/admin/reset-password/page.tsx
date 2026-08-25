@@ -152,11 +152,11 @@ function ResetPasswordForm() {
 export default function ResetPasswordPage() {
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 font-sans text-slate-300">
-      <div className="max-w-md w-full bg-slate-950 border border-slate-800 rounded-md p-6 lg:p-8 shadow-2xl relative grid-pattern">
+      <div className="max-w-md w-full bg-slate-950 border border-slate-800 rounded-md p-6 lg:p-8 shadow-2xl relative">
         
         <div className="text-center mb-8 relative z-10">
           <span className="font-mono text-[10px] font-bold text-slate-500 border border-slate-800 px-2 py-0.5 rounded uppercase tracking-wider">
-            Key Reset
+            STBTCG Key Reset
           </span>
           <h1 className="text-2xl font-black text-white mt-3 tracking-tight leading-none">
             Reset Password
