@@ -34,7 +34,7 @@ export async function adminLogin(prevState: any, formData: FormData) {
   }
 
   await setSession({ id: user.id, username: user.username, role: user.role });
-  redirect("/admin");
+  return { success: true };
 }
 
 export async function adminLogout() {
@@ -1002,14 +1002,14 @@ export async function requestPasswordReset(email: string) {
       </div>
     `;
 
-    await sendMail({
+    const result = await sendMail({
       to: email,
       subject: "Password Reset - Shree TBTC Global Admin Portal",
       text: `Reset your password by visiting this link: ${resetLink}`,
       html: mailHtml,
     });
 
-    return { success: true };
+    return { success: true, devLink: result.fallback ? resetLink : null };
   } catch (error: any) {
     console.error("Error in requestPasswordReset:", error);
     return { error: error.message || "Something went wrong." };

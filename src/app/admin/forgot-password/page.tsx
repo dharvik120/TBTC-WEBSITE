@@ -10,6 +10,7 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [devLink, setDevLink] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,6 +23,9 @@ export default function ForgotPasswordPage() {
         setError(res.error);
         setLoading(false);
       } else {
+        if (res.devLink) {
+          setDevLink(res.devLink);
+        }
         setSuccess(true);
         setLoading(false);
       }
@@ -64,6 +68,22 @@ export default function ForgotPasswordPage() {
               <p className="text-slate-500 text-xs leading-relaxed max-w-sm mx-auto">
                 If the email exists in our system, a password recovery link has been dispatched to <strong className="text-slate-300">{email}</strong>. Please check your inbox and spam folders.
               </p>
+              {devLink && (
+                <div className="bg-amber-950/40 border border-amber-900 text-amber-300 text-xs rounded p-4 mt-4 space-y-2 text-left font-mono">
+                  <div className="font-sans font-extrabold uppercase text-[10px] text-amber-500 tracking-wider">
+                    Developer Mode Bypass
+                  </div>
+                  <p className="text-[11px] leading-normal font-sans text-slate-400">
+                    SMTP is not configured in `.env`. Click the direct recovery link below to test the reset password form immediately:
+                  </p>
+                  <a
+                    href={devLink}
+                    className="block text-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2 rounded text-[11px] no-underline uppercase tracking-wide transition-colors"
+                  >
+                    Reset Password Now
+                  </a>
+                </div>
+              )}
             </div>
             <div className="pt-2">
               <Link

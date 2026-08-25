@@ -34,6 +34,8 @@ export default function LoginPage() {
       if (res && res.error) {
         setError(res.error);
         setLoading(false);
+      } else if (res && res.success) {
+        window.location.href = "/admin";
       }
     } catch (e: any) {
       setError("An unexpected error occurred. Please try again.");

@@ -20,7 +20,7 @@ export default async function DashboardLayout({
     <div className="min-h-screen flex bg-slate-100 font-sans">
       
       {/* Sidebar Panel */}
-      <aside className="w-64 bg-slate-950 text-slate-300 flex flex-col shrink-0 border-r border-slate-900 grid-pattern">
+      <aside className="w-64 bg-slate-950 text-slate-300 flex flex-col shrink-0 border-r border-slate-900">
         
         {/* Header */}
         <div className="h-16 flex items-center justify-center px-6 border-b border-slate-900 bg-slate-950/80">
