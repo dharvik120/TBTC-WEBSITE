@@ -1,0 +1,426 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  passwordHash String
+  email        String   @unique
+  role         String   @default("ADMIN") // ADMIN, EDITOR
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model CompanySettings {
+  id                 String   @id @default("singleton")
+  companyName        String   @default("Shree TBTC Global Industries")
+  logoUrl            String?
+  faviconUrl         String?
+  
+  // Theme Switching
+  activeTheme        String   @default("theme1") // theme1, theme2, theme3
+
+  // Color Management
+  primaryColor       String   @default("#0b3c5d") // Deep Slate Blue
+  secondaryColor     String   @default("#d9534f") // Accent Red/Orange
+  accentColor        String   @default("#328cc1") // Vibrant Light Blue
+  backgroundColor    String   @default("#ffffff") // Website Canvas
+  darkSectionColor   String   @default("#0f172a") // Slate 900
+  textColor          String   @default("#334155") // Slate 700
+  buttonColor        String   @default("#0b3c5d")
+  buttonHoverColor   String   @default("#0d4870")
+  linkColor          String   @default("#0b3c5d")
+
+  // Contact Details
+  email              String?  @default("info@stbtcgi.in")
+  phoneNumbers       String?  @default("+91-9331404702, +91-8240450043, +91-9038707773")
+  whatsAppNumber     String?  @default("+919331404702")
+  address            String?  @default("Flat No: 302, 14/1 Sree Kishen Bhakat Lane, Howrah - 711101, West Bengal, India")
+  city               String?  @default("Howrah")
+  state              String?  @default("West Bengal")
+  country            String?  @default("India")
+  postalCode         String?  @default("711101")
+  gstNumber          String?  @default("")
+  businessHours      String?  @default("Monday – Saturday (10:00 AM – 05:00 PM)")
+  googleMapsEmbed    String?  
+
+  // Top Contact Bar CMS
+  enableTopContactBar Boolean  @default(true)
+  topBarTitle        String   @default("DEALER & IMPORTER")
+  topBarConfig       String?  // JSON list of customizable items
+
+  // Header & Navigation CMS
+  mobileLogoUrl      String?
+  headerCtaText      String?  @default("Request Quote")
+  headerCtaLink      String?  @default("/quote")
+  enableHeaderSearch Boolean  @default(true)
+  enableStickyHeader Boolean  @default(true)
+  navigationConfig   String?  // JSON string for links & dropdown structures
+
+  // Slider Global settings
+  sliderAutoplay     Boolean  @default(true)
+  sliderAutoplaySpeed Int     @default(5000)
+  sliderTransitionStyle String @default("fade") // fade, slide
+  sliderTransitionSpeed Int    @default(500)
+  sliderShowArrows   Boolean  @default(true)
+  sliderShowDots     Boolean  @default(true)
+  sliderHeight       String   @default("h-[600px]")
+
+  // Homepage Who We Are CMS
+  introEnabled       Boolean  @default(true)
+  introHeading       String   @default("Who We Are")
+  introHighlightHeading String @default("Shree TBTC Global Industries")
+  introSubtitle      String   @default("Your Trusted Industrial Procurement Partner")
+  introDescription   String   @default("Founded with the goal of bringing robust industrial procurement to global standards...")
+  introImages        String?  // JSON string array of URLs
+  introCtaText       String   @default("Read Our Profile")
+  introCtaLink       String   @default("/about")
+  introCtaStyle      String   @default("primary")
+  introBgColor       String   @default("#ffffff")
+  introTextColor     String   @default("#334155")
+  introLayoutStyle   String   @default("left-image")
+
+  // Categories Listing Configurations
+  homeCategoriesLimit   Int    @default(6)
+  homeCategoriesLayout  String @default("grid")
+
+  // Featured Products Section CMS
+  homeFeaturedProductsEnabled   Boolean @default(true)
+  homeFeaturedProductsHeading   String  @default("Featured Products")
+  homeFeaturedProductsSubtitle  String  @default("High-Quality Industrial Supplies")
+  homeFeaturedProductsLimit     Int     @default(6)
+  homeFeaturedProductsCtaText   String  @default("View All Products")
+  homeFeaturedProductsCtaLink   String  @default("/products")
+  homeFeaturedProductsLayout    String  @default("grid")
+
+  // Why Work With Us Section CMS
+  whyWorkEnabled     Boolean  @default(true)
+  whyWorkHeading     String   @default("Why Work With Shree TBTC")
+  whyWorkHighlight   String   @default("Shree TBTC")
+  whyWorkSubtitle    String   @default("Our Commitment to Quality")
+  whyWorkDescription String   @default("We supply certified products directly from manufacturers to minimize downtime.")
+  whyWorkBgColor     String   @default("#f8fafc")
+  whyWorkTextColor   String   @default("#334155")
+  whyWorkImage       String?
+  whyWorkLayout      String   @default("left-content")
+
+  // Industries Section CMS
+  homeIndustriesEnabled     Boolean @default(true)
+  homeIndustriesHeading     String  @default("Industries We Serve")
+  homeIndustriesSubtitle    String  @default("Sectors We Support")
+  homeIndustriesDescription String  @default("Catering to critical processing, refining and transmission sectors.")
+  homeIndustriesBgColor     String  @default("#ffffff")
+  homeIndustriesTextColor   String  @default("#334155")
+  homeIndustriesLayout      String  @default("grid")
+
+  // CTA Section CMS
+  homeCtaEnabled     Boolean  @default(true)
+  homeCtaHeading     String   @default("Looking for a specific Industrial Component or custom steel order?")
+  homeCtaHighlight   String   @default("Industrial Component")
+  homeCtaDescription String   @default("Talk to our technical sales experts for stock checks and pricing.")
+  homeCtaBgColor     String   @default("#0b3c5d")
+  homeCtaBgImage     String?
+  homeCtaBgOverlay   Float    @default(0.8)
+  homeCtaTextColor   String   @default("#ffffff")
+  homeCtaButtons     String?  // JSON buttons list
+
+  // Footer Builder Configuration
+  footerConfig       String?  // JSON layout for footer columns
+  copyrightText      String?  @default("© {year} Shree TBTC Global Industries. All Rights Reserved.")
+  copyrightLink      String?  @default("")
+  devCreditText      String?  @default("Created & Developed By Webz Technologies")
+  devCreditLink      String?  @default("https://webztechnologies.com/")
+  devCreditEnabled   Boolean  @default(true)
+  devCreditOpenInNewTab Boolean @default(true)
+
+  // About Page CMS Configuration
+  aboutHeroTitle               String?  @default("About Our Company")
+  aboutHeroSubtitle            String?  @default("Your Trusted Partner in Industrial Procurement")
+  aboutHeroBgImage             String?
+  aboutHeroCtaText             String?
+  aboutHeroCtaLink             String?
+  aboutStoryHeading            String?  @default("One-Stop Source for Switchgear, Steels, Lubricants & Insulators")
+  aboutStoryContent            String?  @default("Established as a primary supply hub in Howrah...")
+  aboutStoryImages             String?  // JSON string array of URLs
+  aboutStoryHighlights         String?  // JSON list of bullet points
+  aboutMissionHeading          String?  @default("Our Mission")
+  aboutMissionContent          String?  @default("To supply high-grade parts directly from manufacturer channels...")
+  aboutMissionImage            String?
+  aboutVisionHeading           String?  @default("Our Vision")
+  aboutVisionContent           String?  @default("To become the leading B2B global industrial procurement house...")
+  aboutVisionImage             String?
+  aboutValuesConfig            String?  // JSON array of values
+  aboutStatsConfig             String?  // JSON array of stats (value, label, icon)
+  aboutTeamConfig              String?  // JSON array of team members
+  aboutCertificationsConfig    String?  // JSON array of certificates
+  aboutCtaConfig               String?  // JSON CTA config for about page
+
+  // Homepage sections manager (order & enablement)
+  homepageSectionsConfig String? // JSON list of sections: [{ id, name, isEnabled, displayOrder }]
+
+  seoTitleDefault    String?  @default("Shree TBTC Global Industries | Industrial Electrical & Automation")
+  seoDescriptionDefault String? @default("Shree TBTC Global Industries is your premier partner for all kinds of electrical switchgears, lubricants, filters, steels, compressors, and industrial importers based in Howrah, West Bengal.")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model HeroSlide {
+  id                String   @id @default(uuid())
+  heading           String
+  subheading        String?
+  ctaText           String?
+  ctaLink           String?
+  secondaryCtaText  String?
+  secondaryCtaLink  String?
+  desktopImageUrl   String
+  mobileImageUrl    String?
+  overlayOpacity    Float    @default(0.4)
+  textAlignment     String   @default("LEFT") // LEFT, CENTER, RIGHT
+  displayOrder      Int      @default(0)
+  isActive          Boolean  @default(true)
+  buttonsConfig     String?  // JSON list supporting custom multiple buttons
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Category {
+  id            String        @id @default(uuid())
+  name          String
+  slug          String        @unique
+  description   String?
+  imageUrl      String?
+  displayOrder  Int           @default(0)
+  isActive      Boolean       @default(true)
+  isFeatured    Boolean       @default(false) // Toggle home display
+  parentId      String?       // Self-relation for Subcategories
+  parent        Category?     @relation("Subcategories", fields: [parentId], references: [id], onDelete: Cascade)
+  subcategories Category[]    @relation("Subcategories")
+  products      Product[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Brand {
+  id          String    @id @default(uuid())
+  name        String
+  slug        String    @unique
+  logoUrl     String?
+  description String?
+  websiteUrl  String?
+  isActive    Boolean   @default(true)
+  isFeatured  Boolean   @default(false)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id                    String            @id @default(uuid())
+  name                  String
+  slug                  String            @unique
+  modelNumber           String?
+  sku                   String?
+  shortDescription      String?
+  fullDescription       String?
+  keyFeatures           String?           // Markdown or line-separated text
+  technicalSpecs        String?           // JSON String: {"Voltage": "240V", "IP Rating": "IP67"}
+  applications          String?           // Line-separated or Markdown
+  isFeatured            Boolean           @default(false)
+  price                 Float?
+  showPrice             Boolean           @default(false)
+  isAvailable           Boolean           @default(true)
+  seoTitle              String?
+  seoDescription        String?
+  seoKeywords           String?
+  displayOrder          Int               @default(0)
+  isActive              Boolean           @default(true)
+  categoryId            String
+  category              Category          @relation(fields: [categoryId], references: [id])
+  brandId               String?
+  brand                 Brand?            @relation(fields: [brandId], references: [id])
+  images                ProductImage[]
+  documents             ProductDocument[]
+  quoteRequestItems     QuoteRequestItem[]
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+}
+
+model ProductImage {
+  id           String   @id @default(uuid())
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  imageUrl     String
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+}
+
+model ProductDocument {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name      String
+  fileUrl   String
+  docType   String   // DATASHEET, CATALOG, MANUAL
+  createdAt DateTime @default(now())
+}
+
+model Industry {
+  id           String   @id @default(uuid())
+  name         String
+  slug         String   @unique
+  description  String?
+  imageUrl     String?
+  iconName     String?
+  linkUrl      String?
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model WhyChooseUs {
+  id           String   @id @default(uuid())
+  title        String
+  description  String
+  iconName     String?  // Lucide icon key
+  linkUrl      String?
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Inquiry {
+  id               String   @id @default(uuid())
+  name             String
+  companyName      String?
+  email            String
+  phone            String
+  inquiryType      String   @default("GENERAL") // GENERAL, TECHNICAL, SALES, CONTACT, CUSTOM
+  relatedProductId String?
+  message          String
+  status           String   @default("NEW") // NEW, READ, CONTACTED, IN_PROGRESS, CONVERTED, CLOSED, SPAM
+  internalNotes    String?
+  dynamicValues    String?  // JSON string storing FormBuilder custom values!
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model QuoteRequest {
+  id            String             @id @default(uuid())
+  name          String
+  companyName   String?
+  email         String
+  phone         String
+  city          String?
+  state         String?
+  message       String?
+  status        String             @default("NEW") // NEW, CONTACTED, IN_PROGRESS, QUOTED, CLOSED
+  internalNotes String?
+  items         QuoteRequestItem[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+}
+
+model QuoteRequestItem {
+  id             String       @id @default(uuid())
+  quoteRequestId String
+  quoteRequest   QuoteRequest @relation(fields: [quoteRequestId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity       Int          @default(1)
+  note           String?
+  createdAt      DateTime     @default(now())
+}
+
+model Blog {
+  id               String   @id @default(uuid())
+  title            String
+  slug             String   @unique
+  summary          String?
+  content          String   // Markdown
+  featuredImageUrl String?
+  author           String?
+  status           String   @default("DRAFT") // DRAFT, PUBLISHED
+  seoTitle         String?
+  seoDescription   String?
+  seoKeywords      String?
+  publishDate      DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Download {
+  id             String   @id @default(uuid())
+  title          String
+  fileUrl        String
+  category       String?  // e.g. "Full Catalogues", "Software", "Certificates"
+  description    String?
+  coverImageUrl  String?
+  brandName      String?
+  downloadAccess String   @default("DIRECT") // DIRECT, INQUIRY_REQUIRED
+  displayOrder   Int      @default(0)
+  isActive       Boolean  @default(true)
+  isFeatured     Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model CustomPage {
+  id             String   @id @default(uuid())
+  title          String
+  slug           String   @unique
+  content        String   // Markdown or HTML
+  seoTitle       String?
+  seoDescription String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model FormField {
+  id             String   @id @default(uuid())
+  formType       String   @default("GENERAL") // GENERAL, PRODUCT, CONTACT, QUOTE
+  label          String
+  name           String   // camelCase identifier e.g. "state"
+  type           String   // TEXT, EMAIL, PHONE, NUMBER, TEXTAREA, SELECT, RADIO, CHECKBOX, DATE, FILE
+  placeholder    String?
+  isRequired     Boolean  @default(false)
+  options        String?  // Comma-separated options for select/radio/checkbox
+  validation     String?  // Regex rules or validation keywords
+  helpText       String?
+  displayOrder   Int      @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model SocialPlatform {
+  id             String   @id @default(uuid())
+  platformName   String   // e.g. Facebook, LinkedIn, Twitter, YouTube
+  iconName       String   // Lucide icon key or SVG inline key
+  profileUrl     String
+  displayOrder   Int      @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Location {
+  id             String   @id @default(uuid())
+  name           String   // e.g. "Howrah Head Office", "Kolkata Showroom"
+  address        String
+  phone          String?
+  email          String?
+  mapEmbed       String?
+  displayOrder   Int      @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
