@@ -1,15 +1,24 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Lock, User, AlertCircle, Loader2 } from "lucide-react";
-import { adminLogin } from "@/app/actions/admin";
+import { Lock, User, AlertCircle, Loader2, CheckCircle2 } from "lucide-react";
+import { adminLogin, checkIsFirstTimeSetup } from "@/app/actions/admin";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isFirstTime, setIsFirstTime] = useState(false);
+
+  useEffect(() => {
+    async function checkSetup() {
+      const res = await checkIsFirstTimeSetup();
+      setIsFirstTime(res.isFirstTime);
+    }
+    checkSetup();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +61,24 @@ export default function LoginPage() {
           </p>
         </div>
 
+        {isFirstTime && (
+          <div className="bg-emerald-950/50 border border-emerald-900 text-emerald-400 rounded p-3.5 mb-5 text-xs flex flex-col gap-2 z-10 relative font-sans">
+            <div className="flex items-center gap-2 font-bold font-mono uppercase text-[10px] tracking-wider">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              <span>Initial Setup Required</span>
+            </div>
+            <p className="text-slate-400 leading-normal text-[11px]">
+              No administrator accounts were detected in the database. Please register the first super administrator account to begin.
+            </p>
+            <Link
+              href="/admin/register"
+              className="mt-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-center rounded text-[10px] font-mono uppercase tracking-wider transition-colors inline-block"
+            >
+              Configure Super Admin
+            </Link>
+          </div>
+        )}
+
         {error && (
           <div className="bg-red-950/50 border border-red-900 text-red-400 rounded p-3 mb-5 text-xs flex items-center gap-2.5 z-10 relative font-mono">
             <AlertCircle className="w-4.5 h-4.5 text-red-500 shrink-0" />
@@ -83,9 +110,14 @@ export default function LoginPage() {
 
           {/* Password */}
           <div>
-            <label htmlFor="password" className="block text-[10px] font-bold font-mono text-slate-500 uppercase mb-1">
-              Secret Passkey
-            </label>
+            <div className="flex justify-between items-center mb-1">
+              <label htmlFor="password" className="block text-[10px] font-bold font-mono text-slate-500 uppercase">
+                Secret Passkey
+              </label>
+              <Link href="/admin/forgot-password" className="text-[9px] font-bold font-mono text-slate-500 hover:text-slate-400 uppercase transition-colors">
+                Forgot Password?
+              </Link>
+            </div>
             <div className="relative">
               <span className="absolute left-3 top-2.5 text-slate-600">
                 <Lock className="w-4 h-4" />

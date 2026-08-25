@@ -920,4 +920,133 @@ export async function updateFeaturedSectionSettings(data: {
   return { success: true };
 }
 
+// -------------------------------------------------------------
+// First-time Setup & Forgot/Reset Password Actions
+// -------------------------------------------------------------
+import crypto from "crypto";
+import { sendMail } from "@/lib/mailer";
+
+export async function checkIsFirstTimeSetup() {
+  try {
+    const userCount = await prisma.user.count();
+    return { isFirstTime: userCount === 0 };
+  } catch (error) {
+    console.error("Error checking user count:", error);
+    return { isFirstTime: false };
+  }
+}
+
+export async function registerAdmin(data: {
+  username: string;
+  email: string;
+  passwordPass: string;
+}) {
+  try {
+    const userCount = await prisma.user.count();
+    if (userCount > 0) {
+      return { error: "First-time setup registration is already disabled." };
+    }
+
+    const passwordHash = await bcrypt.hash(data.passwordPass, 10);
+    await prisma.user.create({
+      data: {
+        username: data.username,
+        email: data.email,
+        passwordHash,
+        role: "SUPER_ADMIN", // First user gets super admin capabilities
+      },
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error creating user:", error);
+    return { error: error.message || "Failed to create administrator account." };
+  }
+}
+
+export async function requestPasswordReset(email: string) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      // Security best practice: Don't reveal if email exists
+      return { success: true };
+    }
+
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiry = new Date(Date.now() + 3600000); // 1 hour validity
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetToken: token,
+        resetTokenExpiry: expiry,
+      },
+    });
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const resetLink = `${appUrl}/admin/reset-password?token=${token}`;
+
+    const mailHtml = `
+      <div style="font-family: sans-serif; padding: 20px; max-width: 600px; border: 1px solid #e2e8f0; border-radius: 8px;">
+        <h2 style="color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-top: 0;">Password Reset Request</h2>
+        <p style="color: #475569; font-size: 14px; line-height: 1.5;">You are receiving this email because a password reset request was initiated for your Shree TBTC Global Admin account.</p>
+        <div style="margin: 25px 0; text-align: center;">
+          <a href="${resetLink}" style="background-color: #0f172a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 14px; display: inline-block;">Reset Password</a>
+        </div>
+        <p style="color: #64748b; font-size: 12px; line-height: 1.5;">This link will expire in 1 hour. If you did not request this, please ignore this email.</p>
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+        <p style="color: #94a3b8; font-size: 10px; margin-bottom: 0;">If the button doesn't work, copy-paste this link in your browser: ${resetLink}</p>
+      </div>
+    `;
+
+    await sendMail({
+      to: email,
+      subject: "Password Reset - Shree TBTC Global Admin Portal",
+      text: `Reset your password by visiting this link: ${resetLink}`,
+      html: mailHtml,
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error in requestPasswordReset:", error);
+    return { error: error.message || "Something went wrong." };
+  }
+}
+
+export async function resetPassword(token: string, newPass: string) {
+  try {
+    const user = await prisma.user.findFirst({
+      where: {
+        resetToken: token,
+        resetTokenExpiry: {
+          gt: new Date(),
+        },
+      },
+    });
+
+    if (!user) {
+      return { error: "Reset token is invalid or has expired." };
+    }
+
+    const passwordHash = await bcrypt.hash(newPass, 10);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash,
+        resetToken: null,
+        resetTokenExpiry: null,
+      },
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error in resetPassword:", error);
+    return { error: error.message || "Failed to reset password." };
+  }
+}
+
 
