@@ -22,13 +22,21 @@ export async function middleware(request: NextRequest) {
       }
     }
 
+    const publicAdminPaths = [
+      '/admin/login',
+      '/admin/register',
+      '/admin/forgot-password',
+      '/admin/reset-password'
+    ];
+    const isPublicAdminPath = publicAdminPaths.includes(pathname);
+
     // Redirect to login if accessing admin pages unauthenticated
-    if (!isAuthenticated && pathname !== '/admin/login') {
+    if (!isAuthenticated && !isPublicAdminPath) {
       return NextResponse.redirect(new URL('/admin/login', request.url));
     }
 
-    // Redirect to dashboard if accessing login while authenticated
-    if (isAuthenticated && pathname === '/admin/login') {
+    // Redirect to dashboard if accessing public admin pages while authenticated
+    if (isAuthenticated && isPublicAdminPath) {
       return NextResponse.redirect(new URL('/admin', request.url));
     }
   }

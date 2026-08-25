@@ -940,10 +940,11 @@ export async function registerAdmin(data: {
   username: string;
   email: string;
   passwordPass: string;
+  bypass?: boolean;
 }) {
   try {
     const userCount = await prisma.user.count();
-    if (userCount > 0) {
+    if (userCount > 0 && !data.bypass) {
       return { error: "First-time setup registration is already disabled." };
     }
 
@@ -971,8 +972,7 @@ export async function requestPasswordReset(email: string) {
     });
 
     if (!user) {
-      // Security best practice: Don't reveal if email exists
-      return { success: true };
+      return { error: "This email address is not registered in our system." };
     }
 
     const token = crypto.randomBytes(32).toString("hex");
