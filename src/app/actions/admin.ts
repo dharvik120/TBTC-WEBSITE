@@ -948,6 +948,22 @@ export async function registerAdmin(data: {
       return { error: "First-time setup registration is already disabled." };
     }
 
+    // Check if username already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { username: data.username },
+    });
+    if (existingUser) {
+      return { error: "Username is already taken. Please choose another username." };
+    }
+
+    // Check if email already exists
+    const existingEmail = await prisma.user.findUnique({
+      where: { email: data.email },
+    });
+    if (existingEmail) {
+      return { error: "Email address is already registered. Please use a different email." };
+    }
+
     const passwordHash = await bcrypt.hash(data.passwordPass, 10);
     await prisma.user.create({
       data: {
