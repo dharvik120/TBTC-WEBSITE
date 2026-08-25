@@ -1,12 +1,17 @@
-import React from "react";
 import Link from "next/link";
 import { 
   Package, FolderTree, Award, Inbox, FileSpreadsheet, 
-  ArrowRight, Plus, Eye, Clock 
+  ArrowRight, Plus, Eye, Clock, ShieldAlert 
 } from "lucide-react";
 import prisma from "@/lib/prisma";
 
-export default async function AdminDashboardPage() {
+interface PageProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export default async function AdminDashboardPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const error = params?.error;
   // Fetch metrics counts
   const [
     productsCount,
@@ -45,6 +50,13 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="space-y-8 font-sans">
+      
+      {error === "unauthorized" && (
+        <div className="bg-red-950/40 border border-red-900 text-red-400 rounded-lg p-4 font-mono flex items-center gap-3">
+          <ShieldAlert className="w-5 h-5 text-red-500 shrink-0 animate-pulse" />
+          <span>ACCESS DENIED: You do not have permission to edit or view that platform sector.</span>
+        </div>
+      )}
       
       {/* Upper Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">

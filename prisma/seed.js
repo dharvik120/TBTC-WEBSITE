@@ -20,12 +20,46 @@ async function main() {
         username: adminUsername,
         email: adminEmail,
         passwordHash,
-        role: 'ADMIN'
+        role: 'SUPER_ADMIN'
       }
     });
     console.log('Admin user created (Username: admin, Password: admin123).');
   } else {
     console.log('Admin user already exists.');
+  }
+
+  // 1b. Seed default Role Configs
+  const defaultRoles = [
+    {
+      role: 'ADMIN',
+      canEditSettings: true,
+      canEditProducts: true,
+      canEditDownloads: true,
+      canEditBlogs: true,
+      canEditForms: true,
+      canEditCustomPages: true
+    },
+    {
+      role: 'EDITOR',
+      canEditSettings: false,
+      canEditProducts: true,
+      canEditDownloads: true,
+      canEditBlogs: true,
+      canEditForms: false,
+      canEditCustomPages: false
+    }
+  ];
+
+  for (const roleConf of defaultRoles) {
+    const existingRole = await prisma.roleConfig.findUnique({
+      where: { role: roleConf.role }
+    });
+    if (!existingRole) {
+      await prisma.roleConfig.create({
+        data: roleConf
+      });
+      console.log(`RoleConfig seeded for ${roleConf.role}`);
+    }
   }
 
   // 2. Initial Top Bar Config JSON

@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { setSession, destroySession } from "@/lib/auth";
+import { setSession, destroySession, getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import fs from "fs";
@@ -1062,6 +1062,207 @@ export async function resetPassword(token: string, newPass: string) {
   } catch (error: any) {
     console.error("Error in resetPassword:", error);
     return { error: error.message || "Failed to reset password." };
+  }
+}
+
+// -------------------------------------------------------------
+// User, RoleConfig & Account management Actions
+// -------------------------------------------------------------
+
+export async function createUser(data: {
+  username: string;
+  email: string;
+  passwordPass: string;
+  role: string;
+}) {
+  try {
+    const session = await getSession();
+    if (!session || session.role !== "SUPER_ADMIN") {
+      return { error: "Unauthorized. Super Admin access required." };
+    }
+
+    const existingUser = await prisma.user.findUnique({
+      where: { username: data.username },
+    });
+    if (existingUser) {
+      return { error: "Username is already taken." };
+    }
+
+    const existingEmail = await prisma.user.findUnique({
+      where: { email: data.email },
+    });
+    if (existingEmail) {
+      return { error: "Email address is already registered." };
+    }
+
+    const passwordHash = await bcrypt.hash(data.passwordPass, 10);
+    const newUser = await prisma.user.create({
+      data: {
+        username: data.username,
+        email: data.email,
+        passwordHash,
+        role: data.role,
+      },
+    });
+
+    revalidatePath("/admin/users");
+    return { success: true, user: newUser };
+  } catch (error: any) {
+    console.error("Error creating user:", error);
+    return { error: error.message || "Failed to create user." };
+  }
+}
+
+export async function deleteUser(id: string) {
+  try {
+    const session = await getSession();
+    if (!session || session.role !== "SUPER_ADMIN") {
+      return { error: "Unauthorized. Super Admin access required." };
+    }
+
+    if (session.userId === id) {
+      return { error: "You cannot delete your own account." };
+    }
+
+    await prisma.user.delete({
+      where: { id },
+    });
+
+    revalidatePath("/admin/users");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error deleting user:", error);
+    return { error: error.message || "Failed to delete user." };
+  }
+}
+
+export async function updateUserRole(id: string, role: string) {
+  try {
+    const session = await getSession();
+    if (!session || session.role !== "SUPER_ADMIN") {
+      return { error: "Unauthorized. Super Admin access required." };
+    }
+
+    if (session.userId === id) {
+      return { error: "You cannot change your own role." };
+    }
+
+    await prisma.user.update({
+      where: { id },
+      data: { role },
+    });
+
+    revalidatePath("/admin/users");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error updating user role:", error);
+    return { error: error.message || "Failed to update user role." };
+  }
+}
+
+export async function getRoleConfigs() {
+  try {
+    const configs = await prisma.roleConfig.findMany();
+    return { success: true, configs };
+  } catch (error: any) {
+    console.error("Error loading role configs:", error);
+    return { error: error.message || "Failed to load role configurations." };
+  }
+}
+
+export async function updateRoleConfig(
+  role: string,
+  data: {
+    canEditSettings: boolean;
+    canEditProducts: boolean;
+    canEditDownloads: boolean;
+    canEditBlogs: boolean;
+    canEditForms: boolean;
+    canEditCustomPages: boolean;
+  }
+) {
+  try {
+    const session = await getSession();
+    if (!session || session.role !== "SUPER_ADMIN") {
+      return { error: "Unauthorized. Super Admin access required." };
+    }
+
+    await prisma.roleConfig.upsert({
+      where: { role },
+      update: data,
+      create: { role, ...data },
+    });
+
+    revalidatePath("/admin/users");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error updating role config:", error);
+    return { error: error.message || "Failed to update role configuration." };
+  }
+}
+
+export async function updateMyAccount(data: {
+  username: string;
+  email: string;
+  passwordPass?: string;
+  profileImage?: string | null;
+}) {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return { error: "Unauthorized. Please log in again." };
+    }
+
+    // Check if new username is taken
+    if (data.username !== session.username) {
+      const existingUser = await prisma.user.findUnique({
+        where: { username: data.username },
+      });
+      if (existingUser) {
+        return { error: "Username is already taken by another account." };
+      }
+    }
+
+    // Check if new email is taken
+    const userObj = await prisma.user.findUnique({
+      where: { id: session.userId },
+    });
+    if (userObj && data.email !== userObj.email) {
+      const existingEmail = await prisma.user.findUnique({
+        where: { email: data.email },
+      });
+      if (existingEmail) {
+        return { error: "Email address is already taken by another account." };
+      }
+    }
+
+    const updateData: any = {
+      username: data.username,
+      email: data.email,
+      profileImage: data.profileImage,
+    };
+
+    if (data.passwordPass && data.passwordPass.trim() !== "") {
+      updateData.passwordHash = await bcrypt.hash(data.passwordPass, 10);
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: session.userId },
+      data: updateData,
+    });
+
+    // Update cookie session
+    await setSession({
+      id: updatedUser.id,
+      username: updatedUser.username,
+      role: updatedUser.role,
+    });
+
+    revalidatePath("/admin");
+    return { success: true, user: updatedUser };
+  } catch (error: any) {
+    console.error("Error updating profile:", error);
+    return { error: error.message || "Failed to update profile settings." };
   }
 }
 

@@ -10,6 +10,14 @@ export interface JWTPayload {
   userId: string;
   username: string;
   role: string;
+  permissions?: {
+    canEditSettings: boolean;
+    canEditProducts: boolean;
+    canEditDownloads: boolean;
+    canEditBlogs: boolean;
+    canEditForms: boolean;
+    canEditCustomPages: boolean;
+  };
 }
 
 export async function encrypt(payload: JWTPayload) {
@@ -39,7 +47,46 @@ export async function getSession(): Promise<JWTPayload | null> {
 }
 
 export async function setSession(user: { id: string; username: string; role: string }) {
-  const session = await encrypt({ userId: user.id, username: user.username, role: user.role });
+  let permissions = {
+    canEditSettings: true,
+    canEditProducts: true,
+    canEditDownloads: true,
+    canEditBlogs: true,
+    canEditForms: true,
+    canEditCustomPages: true
+  };
+
+  if (user.role !== "SUPER_ADMIN") {
+    const roleConfig = await prisma.roleConfig.findUnique({
+      where: { role: user.role }
+    });
+    if (roleConfig) {
+      permissions = {
+        canEditSettings: roleConfig.canEditSettings,
+        canEditProducts: roleConfig.canEditProducts,
+        canEditDownloads: roleConfig.canEditDownloads,
+        canEditBlogs: roleConfig.canEditBlogs,
+        canEditForms: roleConfig.canEditForms,
+        canEditCustomPages: roleConfig.canEditCustomPages
+      };
+    } else {
+      permissions = {
+        canEditSettings: false,
+        canEditProducts: true,
+        canEditDownloads: true,
+        canEditBlogs: true,
+        canEditForms: false,
+        canEditCustomPages: false
+      };
+    }
+  }
+
+  const session = await encrypt({ 
+    userId: user.id, 
+    username: user.username, 
+    role: user.role,
+    permissions 
+  });
   const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, session, {
     httpOnly: true,

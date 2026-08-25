@@ -1,9 +1,11 @@
 import React from "react";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { LogOut, ShieldAlert, Cpu } from "lucide-react";
+import { LogOut, ShieldAlert, UserCheck } from "lucide-react";
 import { adminLogout } from "@/app/actions/admin";
 import AdminSidebarLinks from "@/components/AdminSidebarLinks";
+import prisma from "@/lib/prisma";
+import Link from "next/link";
 
 export default async function DashboardLayout({
   children,
@@ -16,6 +18,47 @@ export default async function DashboardLayout({
     redirect("/admin/login");
   }
 
+  // Fetch live user info (for avatar / username changes)
+  const dbUser = await prisma.user.findUnique({
+    where: { id: session.userId }
+  });
+
+  // Calculate permissions based on role
+  let permissions = {
+    canEditSettings: true,
+    canEditProducts: true,
+    canEditDownloads: true,
+    canEditBlogs: true,
+    canEditForms: true,
+    canEditCustomPages: true
+  };
+
+  if (session.role !== "SUPER_ADMIN") {
+    const roleConfig = await prisma.roleConfig.findUnique({
+      where: { role: session.role }
+    });
+    if (roleConfig) {
+      permissions = {
+        canEditSettings: roleConfig.canEditSettings,
+        canEditProducts: roleConfig.canEditProducts,
+        canEditDownloads: roleConfig.canEditDownloads,
+        canEditBlogs: roleConfig.canEditBlogs,
+        canEditForms: roleConfig.canEditForms,
+        canEditCustomPages: roleConfig.canEditCustomPages
+      };
+    } else {
+      // Default fallback
+      permissions = {
+        canEditSettings: false,
+        canEditProducts: true,
+        canEditDownloads: true,
+        canEditBlogs: true,
+        canEditForms: false,
+        canEditCustomPages: false
+      };
+    }
+  }
+
   return (
     <div className="min-h-screen flex bg-slate-100 font-sans">
       
@@ -24,18 +67,43 @@ export default async function DashboardLayout({
         
         {/* Header */}
         <div className="h-16 flex items-center justify-center px-6 border-b border-slate-900 bg-slate-950/80">
-          <img src="/images/logo.png" alt="STBT Console" className="h-10 w-auto object-contain bg-white rounded p-1" />
+          <img src="/images/logo.png" alt="STBTCG Console" className="h-10 w-auto object-contain bg-white rounded p-1" />
         </div>
 
         {/* Links */}
-        <AdminSidebarLinks />
+        <AdminSidebarLinks permissions={permissions} role={session.role} />
 
-        {/* Logout at bottom */}
-        <div className="p-4 border-t border-slate-900 bg-slate-950/50">
-          <div className="flex items-center justify-between mb-3 px-2 text-xs font-mono text-slate-500">
-            <span>USER: {session.username}</span>
-            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
-          </div>
+        {/* User Account Quick Link & Logout at bottom */}
+        <div className="p-4 border-t border-slate-900 bg-slate-950/50 space-y-3">
+          
+          <Link
+            href="/admin/my-account"
+            className="flex items-center gap-3 p-2 bg-slate-900/60 hover:bg-slate-900 border border-slate-900 hover:border-slate-800 rounded transition-all group cursor-pointer"
+          >
+            {dbUser?.profileImage ? (
+              <img
+                src={dbUser.profileImage}
+                alt={dbUser.username}
+                className="w-8 h-8 rounded-full object-cover border border-slate-700 shrink-0"
+              />
+            ) : (
+              <div className="w-8 h-8 bg-slate-800 rounded-full flex items-center justify-center border border-slate-700 text-slate-300 text-xs font-bold uppercase shrink-0">
+                {dbUser?.username.substring(0, 2)}
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between">
+                <span className="block text-[11px] font-bold text-slate-300 group-hover:text-white truncate font-mono">
+                  {dbUser?.username}
+                </span>
+                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+              </div>
+              <span className="block text-[9px] text-slate-500 font-mono font-bold uppercase tracking-wider">
+                My Profile →
+              </span>
+            </div>
+          </Link>
+
           <form action={adminLogout}>
             <button
               type="submit"
