@@ -1,0 +1,33 @@
+name: Build and Deploy to Vercel
+
+on:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run vercel-build
+
+      - name: Deploy to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          npx vercel --prod --token "$VERCEL_TOKEN" --confirm
+
+# Notes:
+# - Add a repository secret named `VERCEL_TOKEN` with a Vercel personal token.
+# - If your project requires `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID`, add them as
+#   secrets and pass as env vars, or pre-link the project via the Vercel dashboard.
