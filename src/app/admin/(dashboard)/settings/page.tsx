@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { Save, Loader2, Upload, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
-import { updateCompanySettings, uploadFile } from "@/app/actions/admin";
+import { updateCompanySettings } from "@/app/actions/admin";
+import { uploadFile } from "@/lib/upload";
 
 interface SettingsState {
   companyName: string;

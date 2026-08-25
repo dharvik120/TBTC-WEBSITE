@@ -2,7 +2,8 @@
 
 import React, { useState, useTransition } from "react";
 import { Plus, Edit, Trash2, Save, X, Eye, EyeOff, Globe, Loader2, CheckCircle2 } from "lucide-react";
-import { updateIndustriesSectionSettings, saveIndustry, deleteIndustry, uploadFile } from "@/app/actions/admin";
+import { updateIndustriesSectionSettings, saveIndustry, deleteIndustry } from "@/app/actions/admin";
+import { uploadFile } from "@/lib/upload";
 
 interface Industry {
   id: string;

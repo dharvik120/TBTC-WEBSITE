@@ -2,7 +2,8 @@
 
 import React, { useState, useTransition } from "react";
 import { Plus, Edit, Trash2, Loader2, X, PenTool, Save, Upload, ArrowLeft, BookOpen } from "lucide-react";
-import { saveBlog, deleteBlog, uploadFile } from "@/app/actions/admin";
+import { saveBlog, deleteBlog } from "@/app/actions/admin";
+import { uploadFile } from "@/lib/upload";
 
 interface Blog {
   id: string;

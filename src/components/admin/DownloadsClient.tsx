@@ -2,7 +2,8 @@
 
 import React, { useState, useTransition } from "react";
 import { Plus, Edit, Trash2, Save, X, Eye, EyeOff, Download, FileText, Upload, Loader2, CheckCircle2 } from "lucide-react";
-import { saveDownload, deleteDownload, uploadFile } from "@/app/actions/admin";
+import { saveDownload, deleteDownload } from "@/app/actions/admin";
+import { uploadFile } from "@/lib/upload";
 
 interface DownloadItem {
   id: string;

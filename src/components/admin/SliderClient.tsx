@@ -2,7 +2,8 @@
 
 import React, { useState, useTransition } from "react";
 import { Plus, Edit, Trash2, Loader2, X, Sliders, Save, Upload, Eye } from "lucide-react";
-import { saveSlide, deleteSlide, uploadFile } from "@/app/actions/admin";
+import { saveSlide, deleteSlide } from "@/app/actions/admin";
+import { uploadFile } from "@/lib/upload";
 
 interface Slide {
   id: string;

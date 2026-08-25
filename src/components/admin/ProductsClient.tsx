@@ -5,7 +5,8 @@ import {
   Plus, Edit, Trash2, Loader2, X, Package, Save, Upload, 
   Search, Eye, Copy, ArrowLeft, Trash, FileText, CheckCircle2 
 } from "lucide-react";
-import { saveProduct, deleteProduct, uploadFile } from "@/app/actions/admin";
+import { saveProduct, deleteProduct } from "@/app/actions/admin";
+import { uploadFile } from "@/lib/upload";
 
 interface Product {
   id: string;

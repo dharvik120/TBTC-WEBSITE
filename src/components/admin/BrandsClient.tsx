@@ -2,7 +2,8 @@
 
 import React, { useState, useTransition } from "react";
 import { Plus, Edit, Trash2, Loader2, X, Award, Save, Upload, ExternalLink } from "lucide-react";
-import { saveBrand, deleteBrand, uploadFile } from "@/app/actions/admin";
+import { saveBrand, deleteBrand } from "@/app/actions/admin";
+import { uploadFile } from "@/lib/upload";
 
 interface Brand {
   id: string;

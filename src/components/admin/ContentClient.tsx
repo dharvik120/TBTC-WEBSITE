@@ -4,8 +4,9 @@ import React, { useState, useTransition } from "react";
 import { Plus, Edit, Trash2, Loader2, X, Save, Upload, Layers, CheckCircle2, RefreshCw } from "lucide-react";
 import { 
   saveWhyChooseUs, deleteWhyChooseUs, 
-  saveIndustry, deleteIndustry, uploadFile 
+  saveIndustry, deleteIndustry 
 } from "@/app/actions/admin";
+import { uploadFile } from "@/lib/upload";
 
 interface WhyChooseUsItem {
   id: string;

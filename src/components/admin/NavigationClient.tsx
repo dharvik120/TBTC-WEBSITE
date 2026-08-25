@@ -2,7 +2,8 @@
 
 import React, { useState, useTransition } from "react";
 import { Plus, Edit, Trash2, Save, X, ArrowUp, ArrowDown, ChevronRight, FileImage, Upload, Loader2, CheckCircle2 } from "lucide-react";
-import { updateHeaderNavigationConfig, uploadFile } from "@/app/actions/admin";
+import { updateHeaderNavigationConfig } from "@/app/actions/admin";
+import { uploadFile } from "@/lib/upload";
 
 interface NavigationItem {
   name: string;
