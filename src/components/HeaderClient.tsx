@@ -19,6 +19,13 @@ interface HeaderClientProps {
     enableTopContactBar?: boolean | null;
     topBarTitle?: string | null;
     topBarConfig?: string | null;
+    logoUrl?: string | null;
+    mobileLogoUrl?: string | null;
+    headerCtaText?: string | null;
+    headerCtaLink?: string | null;
+    enableHeaderSearch?: boolean | null;
+    enableStickyHeader?: boolean | null;
+    navigationConfig?: string | null;
   };
   categories: {
     id: string;
@@ -85,14 +92,34 @@ export default function HeaderClient({ settings, categories }: HeaderClientProps
     }
   };
 
+  interface NavigationItem {
+    name: string;
+    href: string;
+    isExternal: boolean;
+    dropdownItems?: { name: string; href: string }[];
+  }
+
+  let navigationItems: NavigationItem[] = [];
+  if (settings.navigationConfig) {
+    try {
+      navigationItems = JSON.parse(settings.navigationConfig);
+    } catch (e) {
+      console.error("Failed to parse navigationConfig:", e);
+    }
+  }
+
   // Handle sticky scroll
   useEffect(() => {
+    if (settings.enableStickyHeader === false) {
+      setIsSticky(false);
+      return;
+    }
     const handleScroll = () => {
       setIsSticky(window.scrollY > 120);
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [settings.enableStickyHeader]);
 
   // Fetch search suggestions
   useEffect(() => {
@@ -215,98 +242,142 @@ export default function HeaderClient({ settings, categories }: HeaderClientProps
         <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <img src="/images/logo.png" alt={settings.companyName} className="h-10 w-auto object-contain" />
+            <img src={settings.logoUrl || "/images/logo.png"} alt={settings.companyName} className="h-10 w-auto object-contain" />
           </Link>
 
           {/* Desktop Search */}
-          <div ref={searchRef} className="hidden md:block relative w-80 lg:w-96">
-            <form onSubmit={handleSearchSubmit} className="relative">
-              <input
-                type="text"
-                placeholder="Search products, models, category..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setSearchFocused(true)}
-                className="w-full pl-4 pr-10 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all font-sans"
-              />
-              <button type="submit" className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">
-                <Search className="w-4.5 h-4.5" />
-              </button>
-            </form>
+          {settings.enableHeaderSearch !== false && (
+            <div ref={searchRef} className="hidden md:block relative w-80 lg:w-96">
+              <form onSubmit={handleSearchSubmit} className="relative">
+                <input
+                  type="text"
+                  placeholder="Search products, models, category..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setSearchFocused(true)}
+                  className="w-full pl-4 pr-10 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all font-sans"
+                />
+                <button type="submit" className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">
+                  <Search className="w-4.5 h-4.5" />
+                </button>
+              </form>
 
-            {/* Suggestions Dropdown */}
-            {searchFocused && suggestions.length > 0 && (
-              <div className="absolute left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-md shadow-xl max-h-96 overflow-y-auto z-50 divide-y divide-slate-100">
-                {suggestions.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      router.push(`/product/${item.slug}`);
-                      setSearchFocused(false);
-                      setSearchQuery("");
-                    }}
-                    className="w-full text-left px-4 py-3 hover:bg-slate-50 flex items-center gap-3 transition-colors text-sm"
-                  >
-                    {item.imageUrl ? (
-                      <img src={item.imageUrl} alt={item.name} className="w-10 h-10 object-cover rounded bg-slate-100 border border-slate-100" />
-                    ) : (
-                      <div className="w-10 h-10 bg-slate-100 flex items-center justify-center text-xs font-mono font-bold text-slate-400 rounded border border-slate-100">
-                        N/A
+              {/* Suggestions Dropdown */}
+              {searchFocused && suggestions.length > 0 && (
+                <div className="absolute left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-md shadow-xl max-h-96 overflow-y-auto z-50 divide-y divide-slate-100">
+                  {suggestions.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        router.push(`/product/${item.slug}`);
+                        setSearchFocused(false);
+                        setSearchQuery("");
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-slate-50 flex items-center gap-3 transition-colors text-sm"
+                    >
+                      {item.imageUrl ? (
+                        <img src={item.imageUrl} alt={item.name} className="w-10 h-10 object-cover rounded bg-slate-100 border border-slate-100" />
+                      ) : (
+                        <div className="w-10 h-10 bg-slate-100 flex items-center justify-center text-xs font-mono font-bold text-slate-400 rounded border border-slate-100">
+                          N/A
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-slate-800 truncate">{item.name}</p>
+                        <div className="flex gap-2 text-xs font-mono mt-0.5 text-slate-500">
+                          {item.modelNumber && <span className="font-bold text-slate-700">{item.modelNumber}</span>}
+                          <span>•</span>
+                          <span className="truncate">{item.categoryName}</span>
+                        </div>
                       </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-slate-800 truncate">{item.name}</p>
-                      <div className="flex gap-2 text-xs font-mono mt-0.5 text-slate-500">
-                        {item.modelNumber && <span className="font-bold text-slate-700">{item.modelNumber}</span>}
-                        <span>•</span>
-                        <span className="truncate">{item.categoryName}</span>
-                      </div>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-slate-400 shrink-0" />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+                      <ArrowRight className="w-4 h-4 text-slate-400 shrink-0" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Desktop Menu */}
           <nav className="hidden lg:flex items-center gap-7">
-            <Link href="/" className="text-sm font-semibold text-slate-700 hover:text-primary transition-colors">
-              Home
-            </Link>
-            <Link href="/about" className="text-sm font-semibold text-slate-700 hover:text-primary transition-colors">
-              About Us
-            </Link>
-            
-            {/* Products Dropdown */}
-            <div className="relative group py-2">
-              <button className="flex items-center gap-1 text-sm font-semibold text-slate-700 hover:text-primary transition-colors focus:outline-none">
-                Products
-                <ChevronDown className="w-4 h-4 transition-transform group-hover:rotate-180" />
-              </button>
-              <div className="absolute left-0 mt-2 w-56 bg-white border border-slate-100 rounded-md shadow-lg py-1.5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                <Link href="/products" className="block px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-primary">
-                  All Products
-                </Link>
-                <div className="border-t border-slate-100 my-1"></div>
-                {categories.map((cat) => (
-                  <Link
-                    key={cat.id}
-                    href={`/products/${cat.slug}`}
-                    className="block px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-primary"
-                  >
-                    {cat.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
+            {navigationItems.length > 0 ? (
+              navigationItems.map((item, idx) => {
+                const hasDropdown = item.dropdownItems && item.dropdownItems.length > 0;
 
-            <Link href="/downloads" className="text-sm font-semibold text-slate-700 hover:text-primary transition-colors">
-              Catalogues
-            </Link>
-            <Link href="/contact" className="text-sm font-semibold text-slate-700 hover:text-primary transition-colors">
-              Contact
-            </Link>
+                if (hasDropdown) {
+                  return (
+                    <div key={idx} className="relative group py-2">
+                      <button className="flex items-center gap-1 text-sm font-semibold text-slate-700 hover:text-primary transition-colors focus:outline-none cursor-pointer">
+                        {item.name}
+                        <ChevronDown className="w-4 h-4 transition-transform group-hover:rotate-180" />
+                      </button>
+                      <div className="absolute left-0 mt-2 w-56 bg-white border border-slate-100 rounded-md shadow-lg py-1.5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                        {item.dropdownItems!.map((sub, sIdx) => (
+                          <Link
+                            key={sIdx}
+                            href={sub.href}
+                            className="block px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-primary"
+                          >
+                            {sub.name}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <Link 
+                    key={idx} 
+                    href={item.href} 
+                    target={item.isExternal ? "_blank" : undefined}
+                    rel={item.isExternal ? "noopener noreferrer" : undefined}
+                    className="text-sm font-semibold text-slate-700 hover:text-primary transition-colors"
+                  >
+                    {item.name}
+                  </Link>
+                );
+              })
+            ) : (
+              <>
+                <Link href="/" className="text-sm font-semibold text-slate-700 hover:text-primary transition-colors">
+                  Home
+                </Link>
+                <Link href="/about" className="text-sm font-semibold text-slate-700 hover:text-primary transition-colors">
+                  About Us
+                </Link>
+                
+                {/* Products Dropdown */}
+                <div className="relative group py-2">
+                  <button className="flex items-center gap-1 text-sm font-semibold text-slate-700 hover:text-primary transition-colors focus:outline-none">
+                    Products
+                    <ChevronDown className="w-4 h-4 transition-transform group-hover:rotate-180" />
+                  </button>
+                  <div className="absolute left-0 mt-2 w-56 bg-white border border-slate-100 rounded-md shadow-lg py-1.5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <Link href="/products" className="block px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-primary">
+                      All Products
+                    </Link>
+                    <div className="border-t border-slate-100 my-1"></div>
+                    {categories.map((cat) => (
+                      <Link
+                        key={cat.id}
+                        href={`/products/${cat.slug}`}
+                        className="block px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-primary"
+                      >
+                        {cat.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
+                <Link href="/downloads" className="text-sm font-semibold text-slate-700 hover:text-primary transition-colors">
+                  Catalogues
+                </Link>
+                <Link href="/contact" className="text-sm font-semibold text-slate-700 hover:text-primary transition-colors">
+                  Contact
+                </Link>
+              </>
+            )}
           </nav>
 
           {/* Navigation CTAs */}
@@ -329,13 +400,15 @@ export default function HeaderClient({ settings, categories }: HeaderClientProps
             </Link>
 
             {/* Request Quote Button */}
-            <Link 
-              href="/quote" 
-              className="hidden sm:inline-flex items-center justify-center px-4 py-2.5 border text-sm font-bold rounded-md shadow-sm text-white hover:bg-primary-hover focus:outline-none transition-all cursor-pointer"
-              style={{ backgroundColor: "var(--primary-color)", borderColor: "var(--primary-color)" }}
-            >
-              Request Quote
-            </Link>
+            {settings.headerCtaText && (
+              <Link 
+                href={settings.headerCtaLink || "/quote"} 
+                className="hidden sm:inline-flex items-center justify-center px-4 py-2.5 border text-sm font-bold rounded-md shadow-sm text-white hover:bg-primary-hover focus:outline-none transition-all cursor-pointer"
+                style={{ backgroundColor: "var(--primary-color)", borderColor: "var(--primary-color)" }}
+              >
+                {settings.headerCtaText}
+              </Link>
+            )}
 
             {/* Mobile Menu Button */}
             <button 
@@ -367,54 +440,95 @@ export default function HeaderClient({ settings, categories }: HeaderClientProps
 
           {/* Nav Links */}
           <nav className="flex flex-col gap-4 text-base font-semibold text-slate-800 mb-8">
-            <Link 
-              href="/" 
-              onClick={() => setMobileMenuOpen(false)}
-              className="py-2 border-b border-slate-50 hover:text-primary"
-            >
-              Home
-            </Link>
-            <Link 
-              href="/about" 
-              onClick={() => setMobileMenuOpen(false)}
-              className="py-2 border-b border-slate-50 hover:text-primary"
-            >
-              About Us
-            </Link>
-            
-            <div className="py-2 border-b border-slate-50">
-              <p className="text-slate-400 font-mono text-xs uppercase tracking-wider mb-2">Product Categories</p>
-              <div className="flex flex-col gap-2.5 pl-2 font-normal text-sm text-slate-600">
-                <Link href="/products" onClick={() => setMobileMenuOpen(false)} className="hover:text-primary">
-                  All Products
-                </Link>
-                {categories.map((cat) => (
-                  <Link
-                    key={cat.id}
-                    href={`/products/${cat.slug}`}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="hover:text-primary"
-                  >
-                    {cat.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
+            {navigationItems.length > 0 ? (
+              navigationItems.map((item, idx) => {
+                const hasDropdown = item.dropdownItems && item.dropdownItems.length > 0;
 
-            <Link 
-              href="/downloads" 
-              onClick={() => setMobileMenuOpen(false)}
-              className="py-2 border-b border-slate-50 hover:text-primary"
-            >
-              Catalogues / Downloads
-            </Link>
-            <Link 
-              href="/contact" 
-              onClick={() => setMobileMenuOpen(false)}
-              className="py-2 border-b border-slate-50 hover:text-primary"
-            >
-              Contact Us
-            </Link>
+                if (hasDropdown) {
+                  return (
+                    <div key={idx} className="py-2 border-b border-slate-50">
+                      <p className="text-slate-400 font-mono text-xs uppercase tracking-wider mb-2">{item.name}</p>
+                      <div className="flex flex-col gap-2.5 pl-2 font-normal text-sm text-slate-600">
+                        {item.dropdownItems!.map((sub, sIdx) => (
+                          <Link
+                            key={sIdx}
+                            href={sub.href}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="hover:text-primary"
+                          >
+                            {sub.name}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <Link 
+                    key={idx} 
+                    href={item.href}
+                    target={item.isExternal ? "_blank" : undefined}
+                    rel={item.isExternal ? "noopener noreferrer" : undefined}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="py-2 border-b border-slate-50 hover:text-primary"
+                  >
+                    {item.name}
+                  </Link>
+                );
+              })
+            ) : (
+              <>
+                <Link 
+                  href="/" 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="py-2 border-b border-slate-50 hover:text-primary"
+                >
+                  Home
+                </Link>
+                <Link 
+                  href="/about" 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="py-2 border-b border-slate-50 hover:text-primary"
+                >
+                  About Us
+                </Link>
+                
+                <div className="py-2 border-b border-slate-50">
+                  <p className="text-slate-400 font-mono text-xs uppercase tracking-wider mb-2">Product Categories</p>
+                  <div className="flex flex-col gap-2.5 pl-2 font-normal text-sm text-slate-600">
+                    <Link href="/products" onClick={() => setMobileMenuOpen(false)} className="hover:text-primary">
+                      All Products
+                    </Link>
+                    {categories.map((cat) => (
+                      <Link
+                        key={cat.id}
+                        href={`/products/${cat.slug}`}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="hover:text-primary"
+                      >
+                        {cat.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
+                <Link 
+                  href="/downloads" 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="py-2 border-b border-slate-50 hover:text-primary"
+                >
+                  Catalogues / Downloads
+                </Link>
+                <Link 
+                  href="/contact" 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="py-2 border-b border-slate-50 hover:text-primary"
+                >
+                  Contact Us
+                </Link>
+              </>
+            )}
           </nav>
 
           {/* Contact Details in Menu */}
