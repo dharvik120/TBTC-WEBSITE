@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import React from "react";
 import Link from "next/link";
-import { Phone, Mail, MapPin, Clock } from "lucide-react";
+import { Phone, Mail, MapPin, Clock, FileText } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { getCompanySettings } from "@/lib/settings";
 import ContactForm from "@/components/ContactForm";
@@ -92,6 +92,19 @@ export default async function ContactPage() {
                 <div>
                   <h3 className="font-bold text-slate-800 text-sm uppercase font-mono tracking-wider mb-1">Working Hours</h3>
                   <p className="text-slate-650 text-xs leading-relaxed">{settings.businessHours}</p>
+                </div>
+              </div>
+            )}
+
+            {/* GSTIN Identification */}
+            {settings.gstNumber && (
+              <div className="flex gap-4">
+                <div className="w-10 h-10 rounded border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-500 shrink-0 shadow-sm">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-800 text-sm uppercase font-mono tracking-wider mb-1">GSTIN Identification</h3>
+                  <p className="text-slate-650 text-xs font-mono font-bold">{settings.gstNumber}</p>
                 </div>
               </div>
             )}

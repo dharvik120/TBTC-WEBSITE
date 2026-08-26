@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { Phone, Mail, MapPin, Clock } from "lucide-react";
+import * as Icons from "lucide-react";
 import prisma from "@/lib/prisma";
 import { getCompanySettings } from "@/lib/settings";
 
@@ -66,6 +67,12 @@ export default async function Footer() {
     take: 5,
   });
 
+  // Fetch active social media platforms
+  const socialPlatforms = await prisma.socialPlatform.findMany({
+    where: { isActive: true },
+    orderBy: { displayOrder: "asc" },
+  });
+
   const phones = settings.phoneNumbers ? settings.phoneNumbers.split(",").map(p => p.trim()) : [];
   const currentYear = new Date().getFullYear();
 
@@ -87,13 +94,33 @@ export default async function Footer() {
             
             {/* TEXT COLUMN */}
             {col.type === "text" && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <Link href="/" className="inline-block">
                   <img src={settings.logoUrl || "/images/logo.png"} alt={settings.companyName} className="h-10 w-auto object-contain bg-white rounded p-1" />
                 </Link>
                 <p className="text-slate-400 leading-relaxed text-[11px]">
                   {col.content}
                 </p>
+                {/* Social Links */}
+                {socialPlatforms.length > 0 && (
+                  <div className="flex items-center gap-3 pt-2">
+                    {socialPlatforms.map((plat) => {
+                      const IconComponent = (Icons as any)[plat.iconName] || Icons.Share2;
+                      return (
+                        <a
+                          key={plat.id}
+                          href={plat.profileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-8 h-8 rounded-full bg-slate-900 border border-slate-800 hover:border-slate-700 hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                          title={plat.platformName}
+                        >
+                          <IconComponent className="w-4 h-4" />
+                        </a>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
@@ -182,10 +209,6 @@ export default async function Footer() {
                 {settings.devCreditText || "Created & Developed By Webz Technologies"}
               </a>
             </p>
-          )}
-
-          {settings.gstNumber && (
-            <span className="font-mono">GSTIN: {settings.gstNumber}</span>
           )}
         </div>
       </div>
