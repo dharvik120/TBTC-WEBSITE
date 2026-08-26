@@ -172,7 +172,6 @@ export default async function Footer() {
           
           {settings.devCreditEnabled && (
             <p className="text-slate-500 font-mono">
-              {settings.devCreditText}{" "}
               <a 
                 href={settings.devCreditLink || "https://webztechnologies.com/"} 
                 target={settings.devCreditOpenInNewTab ? "_blank" : "_self"} 
@@ -180,7 +179,7 @@ export default async function Footer() {
                 className="hover:text-white transition-colors underline font-bold"
                 style={{ color: "var(--secondary-color)" }}
               >
-                Webz Technologies
+                {settings.devCreditText || "Created & Developed By Webz Technologies"}
               </a>
             </p>
           )}
