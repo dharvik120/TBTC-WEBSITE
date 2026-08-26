@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
   Search, Menu, X, ShoppingCart, Phone, Mail, Clock, 
-  ChevronDown, ArrowRight, MessageSquare 
+  ChevronDown, ArrowRight, MessageSquare, Globe 
 } from "lucide-react";
 import { useQuoteCart } from "@/context/QuoteCartContext";
 
@@ -16,6 +16,9 @@ interface HeaderClientProps {
     email?: string | null;
     businessHours?: string | null;
     whatsAppNumber?: string | null;
+    enableTopContactBar?: boolean | null;
+    topBarTitle?: string | null;
+    topBarConfig?: string | null;
   };
   categories: {
     id: string;
@@ -45,6 +48,42 @@ export default function HeaderClient({ settings, categories }: HeaderClientProps
   
   const searchRef = useRef<HTMLDivElement>(null);
   const firstPhone = settings.phoneNumbers?.split(",")[0]?.trim() || "";
+
+  // Parse custom top bar config
+  const showTopBar = settings.enableTopContactBar !== false;
+  const announcementTitle = settings.topBarTitle || "DEALER & IMPORTER";
+  
+  interface TopBarItem {
+    id: string;
+    type: string;
+    label: string;
+    value: string;
+    icon: string;
+    isEnabled: boolean;
+    displayOrder: number;
+  }
+
+  let topBarItems: TopBarItem[] = [];
+  if (settings.topBarConfig) {
+    try {
+      topBarItems = JSON.parse(settings.topBarConfig)
+        .filter((item: TopBarItem) => item.isEnabled)
+        .sort((a: TopBarItem, b: TopBarItem) => a.displayOrder - b.displayOrder);
+    } catch (e) {
+      console.error("Failed to parse topBarConfig:", e);
+    }
+  }
+
+  const getIconComponent = (iconName: string) => {
+    switch (iconName) {
+      case "Phone": return Phone;
+      case "Mail": return Mail;
+      case "Clock": return Clock;
+      case "MessageSquare": return MessageSquare;
+      case "Globe": return Globe;
+      default: return Phone;
+    }
+  };
 
   // Handle sticky scroll
   useEffect(() => {
@@ -99,33 +138,73 @@ export default function HeaderClient({ settings, categories }: HeaderClientProps
   return (
     <header className="w-full z-50 bg-white">
       {/* Top Bar - hidden when sticky and on mobile */}
-      <div className="hidden lg:block bg-slate-900 text-slate-300 py-2.5 text-sm border-b border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
-          <div className="flex items-center gap-6">
-            {firstPhone && (
-              <a href={`tel:${firstPhone}`} className="flex items-center gap-2 hover:text-white transition-colors">
-                <Phone className="w-4 h-4 text-primary" style={{ color: "var(--secondary-color)" }} />
-                <span>{firstPhone}</span>
-              </a>
-            )}
-            {settings.email && (
-              <a href={`mailto:${settings.email}`} className="flex items-center gap-2 hover:text-white transition-colors">
-                <Mail className="w-4 h-4 text-primary" style={{ color: "var(--secondary-color)" }} />
-                <span>{settings.email}</span>
-              </a>
-            )}
-            {settings.businessHours && (
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-slate-500" />
-                <span>{settings.businessHours}</span>
-              </div>
-            )}
-          </div>
-          <div className="flex items-center gap-4 text-xs font-mono tracking-wider uppercase text-slate-400">
-            <span>DEALER & IMPORTER</span>
+      {showTopBar && (
+        <div className="hidden lg:block bg-slate-900 text-slate-300 py-2.5 text-sm border-b border-slate-800">
+          <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
+            <div className="flex items-center gap-6">
+              {topBarItems.length > 0 ? (
+                topBarItems.map((item) => {
+                  const IconComp = getIconComponent(item.icon);
+                  const isLink = item.type === "link" || item.type === "whatsapp";
+                  const hrefValue = item.type === "email" 
+                    ? `mailto:${item.value}` 
+                    : item.type === "phone" 
+                    ? `tel:${item.value}` 
+                    : item.type === "whatsapp"
+                    ? `https://wa.me/${item.value.replace(/[^0-9]/g, "")}`
+                    : item.value;
+
+                  if (isLink || item.type === "phone" || item.type === "email") {
+                    return (
+                      <a 
+                        key={item.id} 
+                        href={hrefValue} 
+                        target={item.type === "link" || item.type === "whatsapp" ? "_blank" : undefined}
+                        rel={item.type === "link" || item.type === "whatsapp" ? "noopener noreferrer" : undefined}
+                        className="flex items-center gap-2 hover:text-white transition-colors"
+                      >
+                        <IconComp className="w-4 h-4 text-primary" style={{ color: "var(--secondary-color)" }} />
+                        <span>{item.value}</span>
+                      </a>
+                    );
+                  }
+
+                  return (
+                    <div key={item.id} className="flex items-center gap-2">
+                      <IconComp className="w-4 h-4 text-slate-500" />
+                      <span>{item.value}</span>
+                    </div>
+                  );
+                })
+              ) : (
+                <>
+                  {firstPhone && (
+                    <a href={`tel:${firstPhone}`} className="flex items-center gap-2 hover:text-white transition-colors">
+                      <Phone className="w-4 h-4 text-primary" style={{ color: "var(--secondary-color)" }} />
+                      <span>{firstPhone}</span>
+                    </a>
+                  )}
+                  {settings.email && (
+                    <a href={`mailto:${settings.email}`} className="flex items-center gap-2 hover:text-white transition-colors">
+                      <Mail className="w-4 h-4 text-primary" style={{ color: "var(--secondary-color)" }} />
+                      <span>{settings.email}</span>
+                    </a>
+                  )}
+                  {settings.businessHours && (
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-slate-500" />
+                      <span>{settings.businessHours}</span>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            <div className="flex items-center gap-4 text-xs font-mono tracking-wider uppercase text-slate-400">
+              <span>{announcementTitle}</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Main Navbar */}
       <div className={`w-full transition-all duration-300 ${
