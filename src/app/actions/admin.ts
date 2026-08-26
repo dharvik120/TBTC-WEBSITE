@@ -384,6 +384,7 @@ export async function saveSlide(
     textAlignment: data.textAlignment,
     displayOrder: data.displayOrder,
     isActive: data.isActive,
+    buttonsConfig: null,
   };
 
   if (id) {
