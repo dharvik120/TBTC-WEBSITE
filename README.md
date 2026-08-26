@@ -1,36 +1,47 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Shree TBTC Global Industries – Dynamic Industrial E-Commerce & CMS Portal
 
-## Getting Started
+A modern, high-performance, dynamic B2B industrial procurement portal and Content Management System (CMS) designed for **Shree TBTC Global Industries**. The platform showcases industrial electrical switchgears, structural steel products, lubricants/greases, filtration products, compressors, and high-tension insulators with real-time administration control and client quotation builders.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🌐 Live Deployments
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+*   **Production Portal**: [https://tbtc-website.vercel.app](https://tbtc-website.vercel.app)
+*   **Admin CMS Dashboard**: [https://tbtc-website.vercel.app/admin](https://tbtc-website.vercel.app/admin)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🚀 Key Features
 
-## Learn More
+### 1. Dynamic Content Management (CMS)
+*   **Real-time Synchronization**: Force-dynamic cache-bypassing root layouts ensure that changes to company settings, sliders, contact details, social links, headers, and footers propagate immediately to the public homepage without site rebuilds.
+*   **Multi-Sector Slider Control**: Add, delete, or re-order homepage sliders with customizable transition speeds, transitions (fade/slide), and call-to-actions.
+*   **Dynamic Theme Engine**: Swap themes, brands, primary/secondary colors, background settings, and buttons directly via the admin settings.
 
-To learn more about Next.js, take a look at the following resources:
+### 2. Products Catalog & Download Center
+*   **Categorized Navigation**: Dynamic multi-level products grid layout supporting category slugs, detailed product pages, custom brands, and specification attributes.
+*   **PDF Download Center**: Secure document upload engine where admins can upload catalogs, brochures, or specification PDFs, allowing customers to download files directly.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 3. User & Dynamic Permission Matrix
+*   **Super Admin Control**: Create, manage, and toggle system roles (`SUPER_ADMIN`, `ADMIN`, `EDITOR`).
+*   **Role Permission Matrix**: Granular security checkboxes allowing the Super Admin to toggle write/edit permissions per role across:
+    *   Website Settings (Themes, SEO, navigation headers/footers)
+    *   Products and categories catalog
+    *   Document/PDF uploads
+    *   Inquiries and quotation form builders
+    *   Custom pages and about CMS sections
+*   **Secure Route Middleware**: Zero-DB-hit cryptographic JWT middleware protecting restricted pages and redirecting unauthorized role accesses back to the dashboard with security warnings.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 4. Interactive Quotation Builder
+*   **Dynamic Quote Cart**: Users can browse items, add them to a dedicated cart, adjust quantities, add custom specifications notes, and submit a quote inquiry form directly to the admin dashboard.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🛠️ Technology Stack
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+*   **Frontend**: Next.js 16 (App Router, Turbopack, React 19)
+*   **Styling**: Tailwind CSS 4 with custom dynamic CSS properties configuration
+*   **Database**: PostgreSQL hosted on Supabase (ap-south-1 connection-pooled)
+*   **Database ORM**: Prisma ORM (Client v6.0.1)
+*   **Authentication**: Custom secure JWT authentication
+*   **Hosting**: Vercel Serverless Platform
