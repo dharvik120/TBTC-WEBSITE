@@ -69,6 +69,192 @@ export default function InquiriesClient({ inquiries: initialInquiries }: Inquiri
     }
   };
 
+  // Export filtered list to Excel (CSV)
+  const exportListToExcel = () => {
+    const headers = ["Date", "Name", "Company Name", "Email", "Phone", "Inquiry Type", "Message", "Status", "Internal Notes"];
+    const rows = filtered.map((inq) => [
+      new Date(inq.createdAt).toLocaleString("en-IN"),
+      inq.name,
+      inq.companyName || "",
+      inq.email,
+      inq.phone,
+      inq.inquiryType,
+      (inq.message || "").replace(/"/g, '""'), // escape double quotes
+      inq.status,
+      (inq.internalNotes || "").replace(/"/g, '""')
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) => row.map((val) => `"${val}"`).join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `inquiries_export_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Export filtered list to PDF (print formatted table in new window)
+  const exportListToPDF = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    const tableRowsHtml = filtered.map((inq) => `
+      <tr>
+        <td>${new Date(inq.createdAt).toLocaleDateString("en-IN")}</td>
+        <td>
+          <strong>${inq.name}</strong><br/>
+          <small>${inq.companyName || "No Company"}</small>
+        </td>
+        <td>${inq.email}<br/>${inq.phone}</td>
+        <td>${inq.inquiryType}</td>
+        <td>${inq.status}</td>
+      </tr>
+    `).join("");
+
+    const html = `
+      <html>
+        <head>
+          <title>Inquiries List Report</title>
+          <style>
+            body { font-family: sans-serif; padding: 30px; color: #1e293b; }
+            .header { border-bottom: 2px solid #0b3c5d; padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end; }
+            .title { font-size: 20px; font-weight: bold; color: #0b3c5d; text-transform: uppercase; }
+            table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
+            th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; }
+            th { background: #f8fafc; font-weight: bold; color: #475569; text-transform: uppercase; font-size: 10px; }
+            tr:nth-child(even) { background: #f8fafc; }
+            .footer { text-align: center; font-size: 9px; color: #94a3b8; margin-top: 40px; border-t: 1px solid #e2e8f0; padding-top: 15px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <div class="title">Shree TBTC - Inquiries Report</div>
+              <div style="font-size: 10px; color: #64748b; margin-top: 3px;">Filter: Type=${filterType} | Status=${filterStatus}</div>
+            </div>
+            <div style="font-size: 10px; color: #64748b;">Generated: ${new Date().toLocaleString("en-IN")}</div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Contact</th>
+                <th>Contact Details</th>
+                <th>Type</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRowsHtml}
+            </tbody>
+          </table>
+          <div class="footer">
+            © ${new Date().getFullYear()} Shree TBTC Global Industries.
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
+  // Export single inquiry to PDF
+  const exportSingleToPDF = (inq: Inquiry) => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    let customFieldsHtml = "";
+    if (inq.dynamicValues) {
+      try {
+        const parsed = JSON.parse(inq.dynamicValues);
+        if (parsed && Object.keys(parsed).length > 0) {
+          customFieldsHtml = `
+            <div class="meta-title" style="margin-top:20px;">Form Specifications</div>
+            <table style="width:100%; border-collapse: collapse; margin-bottom: 30px;">
+              ${Object.entries(parsed).map(([k, v]) => `
+                <tr>
+                  <td style="width:200px;font-weight:bold;background:#f8fafc;border:1px solid #e2e8f0;padding:8px;font-size:11px;">${k.toUpperCase()}</td>
+                  <td style="border:1px solid #e2e8f0;padding:8px;font-size:11px;">${Array.isArray(v) ? v.join(", ") : String(v)}</td>
+                </tr>
+              `).join("")}
+            </table>
+          `;
+        }
+      } catch(e){}
+    }
+
+    const html = `
+      <html>
+        <head>
+          <title>Inquiry Details - ${inq.name}</title>
+          <style>
+            body { font-family: sans-serif; padding: 40px; color: #1e293b; }
+            .header { border-bottom: 2px solid #0b3c5d; padding-bottom: 20px; margin-bottom: 30px; }
+            .title { font-size: 24px; font-weight: bold; color: #0b3c5d; text-transform: uppercase; }
+            .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+            .meta-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 4px; }
+            .meta-title { font-size: 10px; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 5px; }
+            .message-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 4px; margin-bottom: 30px; white-space: pre-wrap; font-size: 12px; line-height: 1.6; }
+            .footer { text-align: center; font-size: 11px; color: #94a3b8; margin-top: 50px; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="title">Shree TBTC - Customer Inquiry</div>
+            <div style="font-size: 12px; color: #64748b; margin-top: 5px;">Reference ID: ${inq.id}</div>
+          </div>
+          <div class="meta">
+            <div class="meta-box">
+              <div class="meta-title">Buyer Information</div>
+              <div style="font-size: 13px;"><strong>${inq.name}</strong></div>
+              ${inq.companyName ? `<div style="font-size: 11px; margin-top:3px;">Company: ${inq.companyName}</div>` : ""}
+              <div style="font-size: 11px;">Email: ${inq.email}</div>
+              <div style="font-size: 11px;">Phone: ${inq.phone}</div>
+            </div>
+            <div class="meta-box">
+              <div class="meta-title">Inquiry Log</div>
+              <div style="font-size: 11px;">Type: <strong>${inq.inquiryType}</strong></div>
+              <div style="font-size: 11px;">Status: <strong>${inq.status}</strong></div>
+              <div style="font-size: 11px;">Date: ${new Date(inq.createdAt).toLocaleString("en-IN")}</div>
+            </div>
+          </div>
+          ${customFieldsHtml}
+          <div class="meta-title">Inquiry Message</div>
+          <div class="message-box">${inq.message}</div>
+          ${inq.internalNotes ? `
+            <div class="meta-title">Internal Sales Notes</div>
+            <div class="message-box" style="border-left: 4px solid #64748b; background: #fafafa;">${inq.internalNotes}</div>
+          ` : ""}
+          <div class="footer">
+            © ${new Date().getFullYear()} Shree TBTC Global Industries. Generated on ${new Date().toLocaleDateString("en-IN")}.
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
   // Filter logic
   const filtered = inquiries.filter((i) => {
     const matchType = filterType === "ALL" || i.inquiryType === filterType;
@@ -121,8 +307,24 @@ export default function InquiriesClient({ inquiries: initialInquiries }: Inquiri
             </select>
           </div>
         </div>
-        <div className="text-xs font-mono text-slate-500">
-          Showing {filtered.length} of {inquiries.length} Inquiries
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="text-xs font-mono text-slate-500">
+            Showing {filtered.length} of {inquiries.length} Inquiries
+          </div>
+          <button
+            onClick={exportListToExcel}
+            className="flex items-center gap-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold font-mono uppercase cursor-pointer transition-colors shadow-sm"
+            title="Export List to CSV/Excel"
+          >
+            Excel
+          </button>
+          <button
+            onClick={exportListToPDF}
+            className="flex items-center gap-1 px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded text-[10px] font-bold font-mono uppercase cursor-pointer transition-colors shadow-sm"
+            title="Export List to PDF"
+          >
+            PDF
+          </button>
         </div>
       </div>
 
@@ -298,6 +500,15 @@ export default function InquiriesClient({ inquiries: initialInquiries }: Inquiri
                     <Save className="w-3.5 h-3.5" />
                   )}
                   <span>Save Updates</span>
+                </button>
+
+                {/* Print details button */}
+                <button
+                  onClick={() => exportSingleToPDF(selected)}
+                  className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-slate-300 hover:bg-slate-50 text-slate-700 rounded font-bold uppercase text-[10px] font-mono cursor-pointer shadow-sm"
+                >
+                  <Eye className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Print Detail PDF Report</span>
                 </button>
               </div>
             </div>

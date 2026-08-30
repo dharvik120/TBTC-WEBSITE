@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import path from "path";
-import fs from "fs";
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,22 +9,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    // Call Catbox upload API
+    const catboxForm = new FormData();
+    catboxForm.append("reqtype", "fileupload");
+    catboxForm.append("fileToUpload", file);
 
-    // Clean file name
-    const ext = path.extname(file.name);
-    const base = path.basename(file.name, ext).replace(/[^a-zA-Z0-9-]/g, "_");
-    const filename = `${Date.now()}-${base}${ext}`;
+    const response = await fetch("https://catbox.moe/user/api.php", {
+      method: "POST",
+      body: catboxForm,
+    });
 
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    if (!response.ok) {
+      throw new Error(`Catbox error: ${response.statusText}`);
     }
 
-    fs.writeFileSync(path.join(uploadDir, filename), buffer);
+    const fileUrl = await response.text();
+    if (!fileUrl || !fileUrl.startsWith("http")) {
+      throw new Error(`Invalid response from Catbox: ${fileUrl}`);
+    }
 
-    return NextResponse.json({ url: `/uploads/${filename}` });
+    return NextResponse.json({ url: fileUrl.trim() });
   } catch (error) {
     console.error("Upload error:", error);
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });

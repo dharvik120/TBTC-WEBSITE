@@ -77,6 +77,209 @@ export default function QuotesClient({ quotes: initialQuotes }: QuotesClientProp
     }
   };
 
+  // Export filtered list to Excel (CSV)
+  const exportListToExcel = () => {
+    const headers = ["Date", "Name", "Company Name", "Email", "Phone", "City/State", "Items Count", "Products List", "Status", "Cover Message", "Internal Notes"];
+    const rows = filtered.map((q) => {
+      const itemsList = q.items.map((i) => `${i.product.name}${i.product.modelNumber ? ` [M/N: ${i.product.modelNumber}]` : ""} (Qty: ${i.quantity})`).join("; ");
+      return [
+        new Date(q.createdAt).toLocaleString("en-IN"),
+        q.name,
+        q.companyName || "",
+        q.email,
+        q.phone,
+        `${q.city || ""}${q.city && q.state ? ", " : ""}${q.state || ""}`,
+        q.items.reduce((sum, i) => sum + i.quantity, 0),
+        itemsList.replace(/"/g, '""'),
+        q.status,
+        (q.message || "").replace(/"/g, '""'),
+        (q.internalNotes || "").replace(/"/g, '""')
+      ];
+    });
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) => row.map((val) => `"${val}"`).join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `quotes_export_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Export filtered list to PDF table report
+  const exportListToPDF = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    const tableRowsHtml = filtered.map((q) => `
+      <tr>
+        <td>${new Date(q.createdAt).toLocaleDateString("en-IN")}</td>
+        <td>
+          <strong>${q.name}</strong><br/>
+          <small>${q.companyName || "No Company"}</small>
+        </td>
+        <td>${q.email}<br/>${q.phone}</td>
+        <td>${q.items.reduce((sum, i) => sum + i.quantity, 0)} Items (${q.items.length} types)</td>
+        <td>${q.status}</td>
+      </tr>
+    `).join("");
+
+    const html = `
+      <html>
+        <head>
+          <title>Quote Requests Report</title>
+          <style>
+            body { font-family: sans-serif; padding: 30px; color: #1e293b; }
+            .header { border-bottom: 2px solid #0b3c5d; padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end; }
+            .title { font-size: 20px; font-weight: bold; color: #0b3c5d; text-transform: uppercase; }
+            table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
+            th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; }
+            th { background: #f8fafc; font-weight: bold; color: #475569; text-transform: uppercase; font-size: 10px; }
+            tr:nth-child(even) { background: #f8fafc; }
+            .footer { text-align: center; font-size: 9px; color: #94a3b8; margin-top: 40px; border-t: 1px solid #e2e8f0; padding-top: 15px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <div class="title">Shree TBTC - RFQ Quotes Report</div>
+              <div style="font-size: 10px; color: #64748b; margin-top: 3px;">Filter: Status=${filterStatus}</div>
+            </div>
+            <div style="font-size: 10px; color: #64748b;">Generated: ${new Date().toLocaleString("en-IN")}</div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Buyer</th>
+                <th>Contact Info</th>
+                <th>Total Items</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRowsHtml}
+            </tbody>
+          </table>
+          <div class="footer">
+            © ${new Date().getFullYear()} Shree TBTC Global Industries.
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
+  // Export single Quote request details invoice/sheet PDF
+  const exportSingleToPDF = (q: QuoteRequest) => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    const itemsTableRows = q.items.map((item) => `
+      <tr>
+        <td style="border:1px solid #e2e8f0;padding:10px;font-size:11px;">
+          <strong>${item.product.name}</strong>
+          ${item.product.modelNumber ? `<br/><span style="color:#64748b;font-size:10px;">Model: ${item.product.modelNumber}</span>` : ""}
+        </td>
+        <td style="border:1px solid #e2e8f0;padding:10px;font-size:11px;text-align:center;font-weight:bold;">${item.quantity}</td>
+        <td style="border:1px solid #e2e8f0;padding:10px;font-size:11px;color:#475569;">${item.note || "--"}</td>
+      </tr>
+    `).join("");
+
+    const html = `
+      <html>
+        <head>
+          <title>Quotation Request - ${q.name}</title>
+          <style>
+            body { font-family: sans-serif; padding: 40px; color: #1e293b; }
+            .header { border-bottom: 2px solid #0b3c5d; padding-bottom: 20px; margin-bottom: 30px; }
+            .title { font-size: 24px; font-weight: bold; color: #0b3c5d; text-transform: uppercase; }
+            .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+            .meta-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 4px; }
+            .meta-title { font-size: 10px; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 5px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 30px; }
+            th { border: 1px solid #e2e8f0; background: #f8fafc; padding: 10px; text-align: left; font-size: 10px; font-weight: bold; color: #475569; text-transform: uppercase; }
+            .message-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 4px; margin-bottom: 30px; white-space: pre-wrap; font-size: 12px; line-height: 1.6; }
+            .footer { text-align: center; font-size: 11px; color: #94a3b8; margin-top: 50px; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="title">Shree TBTC - Quotation Request (RFQ)</div>
+            <div style="font-size: 12px; color: #64748b; margin-top: 5px;">Request ID: ${q.id}</div>
+          </div>
+          <div class="meta">
+            <div class="meta-box">
+              <div class="meta-title">Buyer Information</div>
+              <div style="font-size: 13px;"><strong>${q.name}</strong></div>
+              ${q.companyName ? `<div style="font-size: 11px; margin-top:3px;">Company: ${q.companyName}</div>` : ""}
+              <div style="font-size: 11px;">Email: ${q.email}</div>
+              <div style="font-size: 11px;">Phone: ${q.phone}</div>
+              ${(q.city || q.state) ? `<div style="font-size: 11px;">Location: ${q.city || ""}${q.city && q.state ? ", " : ""}${q.state || ""}</div>` : ""}
+            </div>
+            <div class="meta-box">
+              <div class="meta-title">Quotation Details</div>
+              <div style="font-size: 11px;">Status: <strong>${q.status}</strong></div>
+              <div style="font-size: 11px;">Items Count: <strong>${q.items.reduce((sum, i) => sum + i.quantity, 0)} Items</strong></div>
+              <div style="font-size: 11px;">Date Received: ${new Date(q.createdAt).toLocaleString("en-IN")}</div>
+            </div>
+          </div>
+
+          <div class="meta-title">Requested Products & Specifications</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Product Description</th>
+                <th style="text-align:center;width:80px;">Qty</th>
+                <th>Specifications / Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsTableRows}
+            </tbody>
+          </table>
+
+          ${q.message ? `
+            <div class="meta-title">Buyer Note/Message</div>
+            <div class="message-box">${q.message}</div>
+          ` : ""}
+
+          ${q.internalNotes ? `
+            <div class="meta-title">Internal Commercial Notes</div>
+            <div class="message-box" style="border-left: 4px solid #64748b; background: #fafafa;">${q.internalNotes}</div>
+          ` : ""}
+          
+          <div class="footer">
+            © ${new Date().getFullYear()} Shree TBTC Global Industries. Generated on ${new Date().toLocaleDateString("en-IN")}.
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
   // Filter quotes
   const filtered = quotes.filter((q) => {
     return filterStatus === "ALL" || q.status === filterStatus;
@@ -102,8 +305,24 @@ export default function QuotesClient({ quotes: initialQuotes }: QuotesClientProp
             <option value="CLOSED">Closed</option>
           </select>
         </div>
-        <div className="text-xs font-mono text-slate-500">
-          Showing {filtered.length} of {quotes.length} RFQs
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="text-xs font-mono text-slate-500">
+            Showing {filtered.length} of {quotes.length} RFQs
+          </div>
+          <button
+            onClick={exportListToExcel}
+            className="flex items-center gap-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold font-mono uppercase cursor-pointer transition-colors shadow-sm"
+            title="Export List to CSV/Excel"
+          >
+            Excel
+          </button>
+          <button
+            onClick={exportListToPDF}
+            className="flex items-center gap-1 px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded text-[10px] font-bold font-mono uppercase cursor-pointer transition-colors shadow-sm"
+            title="Export List to PDF"
+          >
+            PDF
+          </button>
         </div>
       </div>
 
@@ -305,6 +524,15 @@ export default function QuotesClient({ quotes: initialQuotes }: QuotesClientProp
                     <Save className="w-3.5 h-3.5" />
                   )}
                   <span>Save RFQ Updates</span>
+                </button>
+
+                {/* Print details button */}
+                <button
+                  onClick={() => exportSingleToPDF(selected)}
+                  className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-slate-300 hover:bg-slate-50 text-slate-700 rounded font-bold uppercase text-[10px] font-mono cursor-pointer shadow-sm"
+                >
+                  <Eye className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Print RFQ PDF Report</span>
                 </button>
 
               </div>
