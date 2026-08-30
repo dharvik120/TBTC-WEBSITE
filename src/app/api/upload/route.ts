@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,31 +10,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Convert the file stream to a static memory Buffer/Blob
-    // to prevent multipart boundary issues in serverless runtimes.
     const bytes = await file.arrayBuffer();
-    const fileBlob = new Blob([bytes], { type: file.type });
+    const buffer = Buffer.from(bytes);
 
-    const catboxForm = new FormData();
-    catboxForm.append("reqtype", "fileupload");
-    catboxForm.append("fileToUpload", fileBlob, file.name || "upload");
-
-    const response = await fetch("https://catbox.moe/user/api.php", {
-      method: "POST",
-      body: catboxForm,
+    const uploaded = await prisma.uploadedFile.create({
+      data: {
+        filename: file.name || "unnamed",
+        mimeType: file.type || "application/octet-stream",
+        data: buffer,
+      },
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Catbox error: ${response.statusText} (${errorText})`);
-    }
-
-    const fileUrl = await response.text();
-    if (!fileUrl || !fileUrl.startsWith("http")) {
-      throw new Error(`Invalid response from Catbox: ${fileUrl}`);
-    }
-
-    return NextResponse.json({ url: fileUrl.trim() });
+    return NextResponse.json({ url: `/api/uploads/${uploaded.id}` });
   } catch (error: any) {
     console.error("Upload error:", error);
     return NextResponse.json({ error: error.message || "Upload failed" }, { status: 500 });

@@ -440,3 +440,11 @@ model Location {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
+
+model UploadedFile {
+  id        String   @id @default(uuid())
+  filename  String
+  mimeType  String
+  data      Bytes
+  createdAt DateTime @default(now())
+}
