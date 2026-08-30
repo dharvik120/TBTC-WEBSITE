@@ -9,10 +9,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Call Catbox upload API
+    // Convert the file stream to a static memory Buffer/Blob
+    // to prevent multipart boundary issues in serverless runtimes.
+    const bytes = await file.arrayBuffer();
+    const fileBlob = new Blob([bytes], { type: file.type });
+
     const catboxForm = new FormData();
     catboxForm.append("reqtype", "fileupload");
-    catboxForm.append("fileToUpload", file);
+    catboxForm.append("fileToUpload", fileBlob, file.name || "upload");
 
     const response = await fetch("https://catbox.moe/user/api.php", {
       method: "POST",
@@ -20,7 +24,8 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
-      throw new Error(`Catbox error: ${response.statusText}`);
+      const errorText = await response.text();
+      throw new Error(`Catbox error: ${response.statusText} (${errorText})`);
     }
 
     const fileUrl = await response.text();
@@ -29,8 +34,8 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ url: fileUrl.trim() });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Upload error:", error);
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Upload failed" }, { status: 500 });
   }
 }
