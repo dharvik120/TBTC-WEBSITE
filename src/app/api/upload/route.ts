@@ -28,11 +28,14 @@ export async function POST(request: NextRequest) {
       const signatureStr = `timestamp=${timestamp}${apiSecret}`;
       const signature = crypto.createHash("sha1").update(signatureStr).digest("hex");
 
+      // Convert binary bytes to safe Base64 Data URI to prevent stream corruption
       const bytes = await file.arrayBuffer();
-      const fileBlob = new Blob([bytes], { type: file.type });
+      const buffer = Buffer.from(bytes);
+      const base64 = buffer.toString("base64");
+      const dataUri = `data:${file.type || "application/octet-stream"};base64,${base64}`;
 
       const cloudinaryForm = new FormData();
-      cloudinaryForm.append("file", fileBlob, file.name);
+      cloudinaryForm.append("file", dataUri);
       cloudinaryForm.append("api_key", apiKey);
       cloudinaryForm.append("timestamp", timestamp);
       cloudinaryForm.append("signature", signature);

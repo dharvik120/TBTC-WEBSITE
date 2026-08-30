@@ -248,6 +248,7 @@ export default function ProductsClient({ products: initialProducts, categories, 
       });
 
       if (res.success) {
+        alert("✅ SUCCESS: Product specifications saved successfully! Live database refreshed.");
         window.location.reload();
       }
     });

@@ -116,7 +116,7 @@ export default function DownloadsClient({ initialDownloads }: DownloadsClientPro
       });
 
       if (res.success) {
-        alert("Literature item saved successfully!");
+        alert("✅ SUCCESS: Literature item saved successfully!");
         window.location.reload();
       }
     });

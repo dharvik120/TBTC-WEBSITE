@@ -126,6 +126,7 @@ export default function SliderClient({ slides: initialSlides }: SliderClientProp
       });
 
       if (res.success) {
+        alert("✅ SUCCESS: Hero slide details saved successfully! Homepage updated.");
         window.location.reload();
       }
     });

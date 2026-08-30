@@ -114,7 +114,7 @@ export default function IndustriesClient({ settings, initialIndustries }: Indust
       });
 
       if (res.success) {
-        alert("Sector details saved successfully!");
+        alert("✅ SUCCESS: Sector details saved successfully!");
         window.location.reload();
       }
     });

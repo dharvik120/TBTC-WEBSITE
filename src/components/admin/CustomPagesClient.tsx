@@ -72,7 +72,7 @@ export default function CustomPagesClient({ initialPages }: CustomPagesClientPro
       });
 
       if (res.success) {
-        alert("Custom Page published successfully!");
+        alert("✅ SUCCESS: Custom Page published successfully!");
         window.location.reload();
       }
     });
