@@ -15,6 +15,14 @@ export async function POST(request: NextRequest) {
     const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
     if (cloudName && apiKey && apiSecret) {
+      // Automatically determine the correct Cloudinary resource type
+      let resourceType = "raw";
+      if (file.type.startsWith("image/")) {
+        resourceType = "image";
+      } else if (file.type.startsWith("video/")) {
+        resourceType = "video";
+      }
+
       // Generate signature for secure authenticated upload to Cloudinary
       const timestamp = Math.round(new Date().getTime() / 1000).toString();
       const signatureStr = `timestamp=${timestamp}${apiSecret}`;
@@ -29,18 +37,19 @@ export async function POST(request: NextRequest) {
       cloudinaryForm.append("timestamp", timestamp);
       cloudinaryForm.append("signature", signature);
 
-      // Cloudinary /auto/upload endpoint handles all file types: images, PDFs, Excel sheets, etc.
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`, {
         method: "POST",
         body: cloudinaryForm,
       });
 
+      const resText = await response.text();
+
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Cloudinary upload failed: ${response.statusText} (${errorText})`);
+        console.error(`Cloudinary upload failed for ${file.name} (type: ${resourceType}):`, resText);
+        throw new Error(`Cloudinary upload failed: ${response.statusText} (${resText})`);
       }
 
-      const resData = await response.json();
+      const resData = JSON.parse(resText);
       return NextResponse.json({ url: resData.secure_url });
     } else {
       // Fallback: Save in database if Cloudinary environment variables are missing
