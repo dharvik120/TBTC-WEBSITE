@@ -6,12 +6,12 @@
 export async function uploadFile(formData: FormData): Promise<string | null> {
   try {
     const file = formData.get("file") as File;
-    if (file && file.size > 2 * 1024 * 1024) {
+    if (file && file.size > 50 * 1024 * 1024) {
       alert(
-        "⚠️ SECURITY WARNING: FILE SIZE LIMIT EXCEEDED! ⚠️\n\n" +
+        "⚠️ FILE SIZE LIMIT EXCEEDED ⚠️\n\n" +
         `The file "${file.name}" is ${(file.size / (1024 * 1024)).toFixed(2)} MB, ` +
-        "which exceeds the absolute server limit of 2.0 MB.\n\n" +
-        "Upload has been terminated to protect server bandwidth and memory."
+        "which exceeds the maximum limit of 50 MB.\n\n" +
+        "Please select a file under 50 MB."
       );
       return null;
     }

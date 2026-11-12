@@ -1,15 +1,16 @@
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 import type { Metadata } from "next";
 import "./globals.css";
 import { QuoteCartProvider } from "@/context/QuoteCartContext";
 import { getCompanySettings } from "@/lib/settings";
+import LoadingScreen from "@/components/LoadingScreen";
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getCompanySettings();
   const title = settings.seoTitleDefault || `${settings.companyName} | Industrial Electrical & Automation`;
   const description = settings.seoDescriptionDefault || `${settings.companyName} is your premier partner for industrial automation and electrical components.`;
-  const logoUrl = "https://www.stbtcgi.in/images/logo.png"; // Dynamic canonical URL fallback
+  const logoUrl = "https://www.stbtcgi.com/images/logo.png"; // Dynamic canonical URL fallback
 
   return {
     title: {
@@ -20,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: title,
       description: description,
-      url: "https://www.stbtcgi.in",
+      url: "https://www.stbtcgi.com",
       siteName: settings.companyName,
       images: [
         {
@@ -77,6 +78,7 @@ export default async function RootLayout({
       } as React.CSSProperties}
     >
       <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
+        <LoadingScreen />
         <QuoteCartProvider>
           {children}
         </QuoteCartProvider>

@@ -29,7 +29,7 @@ export async function GET(request: NextRequest, { params }: Params) {
     // Convert Prisma bytes representation to a standard Node Buffer
     const buffer = Buffer.from(file.data);
 
-    return new NextResponse(buffer, {
+    return new NextResponse(new Uint8Array(buffer), {
       status: 200,
       headers,
     });

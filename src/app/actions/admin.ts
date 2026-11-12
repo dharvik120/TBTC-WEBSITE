@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { setSession, destroySession, getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { clearSettingsCache } from "@/lib/settings";
 import fs from "fs";
 import path from "path";
 

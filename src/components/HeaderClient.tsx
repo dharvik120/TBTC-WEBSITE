@@ -241,8 +241,18 @@ export default function HeaderClient({ settings, categories }: HeaderClientProps
       }`}>
         <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <img src={settings.logoUrl || "/images/logo.png"} alt={settings.companyName} className="h-10 w-auto object-contain" />
+          <Link 
+            href="/" 
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center gap-2 cursor-pointer z-30 select-none relative hover:opacity-95 transition-opacity"
+            title="Return to Homepage"
+          >
+            <img 
+              src={settings.logoUrl || "/images/logo.png"} 
+              alt={settings.companyName || "Shree TBTC Global Industries"} 
+              className="h-10 w-auto object-contain cursor-pointer pointer-events-auto"
+              draggable={false}
+            />
           </Link>
 
           {/* Desktop Search */}

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Send, CheckCircle2, AlertCircle } from "lucide-react";
 import { submitInquiry } from "@/app/actions/public";
+import { INTERNATIONAL_DIAL_CODES } from "@/components/ContactForm";
 
 interface FormField {
   id: string;
@@ -41,6 +42,7 @@ export default function ProductInquiryForm({ productId, productName, modelNumber
     name: "",
     companyName: "",
     email: "",
+    countryDialCode: "+91",
     phone: "",
     message: `Hello, I would like to receive technical specifications and pricing details for the product: ${productName}${modelNumber ? ` (Model: ${modelNumber})` : ""}. Please contact me at your earliest.`,
   });
@@ -53,7 +55,7 @@ export default function ProductInquiryForm({ productId, productName, modelNumber
     setFormValues((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleFallbackChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleFallbackChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFallbackData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
@@ -94,11 +96,12 @@ export default function ProductInquiryForm({ productId, productName, modelNumber
         dynamicValues: formValues
       };
     } else {
+      const fullPhone = `${fallbackData.countryDialCode} ${fallbackData.phone.trim()}`;
       payload = {
         name: fallbackData.name,
         companyName: fallbackData.companyName,
         email: fallbackData.email,
-        phone: fallbackData.phone,
+        phone: fullPhone,
         inquiryType: "PRODUCT",
         relatedProductId: productId,
         message: fallbackData.message,
@@ -115,6 +118,7 @@ export default function ProductInquiryForm({ productId, productName, modelNumber
         name: "",
         companyName: "",
         email: "",
+        countryDialCode: "+91",
         phone: "",
         message: "",
       });
@@ -294,18 +298,33 @@ export default function ProductInquiryForm({ productId, productName, modelNumber
               </div>
               <div>
                 <label htmlFor="phone" className="block text-[11px] font-bold font-mono text-slate-400 uppercase mb-1">
-                  Phone Number <span className="text-red-500">*</span>
+                  International Phone / WhatsApp <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  required
-                  value={fallbackData.phone}
-                  onChange={handleFallbackChange}
-                  placeholder="e.g. +91 98765 43210"
-                  className="w-full border border-slate-200 rounded px-3 py-2 text-xs focus:outline-none bg-slate-50 focus:bg-white transition-colors"
-                />
+                <div className="flex rounded border border-slate-200 bg-slate-50 focus-within:bg-white focus-within:border-slate-400 overflow-hidden">
+                  <select
+                    name="countryDialCode"
+                    value={fallbackData.countryDialCode}
+                    onChange={handleFallbackChange}
+                    className="bg-slate-100 hover:bg-slate-200 border-r border-slate-200 px-2 py-2 text-xs font-mono font-bold text-slate-800 focus:outline-none cursor-pointer shrink-0"
+                    title="Country Calling Code"
+                  >
+                    {INTERNATIONAL_DIAL_CODES.map((c) => (
+                      <option key={c.code} value={c.dial}>
+                        {c.flag} {c.dial} ({c.name})
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    required
+                    value={fallbackData.phone}
+                    onChange={handleFallbackChange}
+                    placeholder="e.g. 98765 43210 / 555-0199"
+                    className="w-full px-3 py-2 text-xs bg-transparent focus:outline-none font-mono"
+                  />
+                </div>
               </div>
             </div>
 

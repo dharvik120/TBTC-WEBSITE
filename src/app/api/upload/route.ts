@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
+import path from "path";
+import fs from "fs";
+import prisma from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,68 +12,44 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-    const apiKey = process.env.CLOUDINARY_API_KEY;
-    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
 
-    if (cloudName && apiKey && apiSecret) {
-      // Automatically determine the correct Cloudinary resource type
-      let resourceType = "raw";
-      if (file.type.startsWith("image/")) {
-        resourceType = "image";
-      } else if (file.type.startsWith("video/")) {
-        resourceType = "video";
-      }
+    // Sanitize and generate unique safe filename
+    const originalName = file.name || "unnamed";
+    const ext = path.extname(originalName) || "";
+    const baseName = path.basename(originalName, ext).replace(/[^a-zA-Z0-9_\-]/g, "_");
+    const uniqueFilename = `${Date.now()}-${baseName}${ext}`;
 
-      // Generate signature for secure authenticated upload to Cloudinary
-      const timestamp = Math.round(new Date().getTime() / 1000).toString();
-      const signatureStr = `timestamp=${timestamp}${apiSecret}`;
-      const signature = crypto.createHash("sha1").update(signatureStr).digest("hex");
+    // 1. Save to local server storage (Hostinger public/uploads folder)
+    const uploadsDir = path.join(process.cwd(), "public", "uploads");
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    const filePath = path.join(uploadsDir, uniqueFilename);
+    fs.writeFileSync(filePath, buffer);
 
-      // Convert binary bytes to safe Base64 Data URI to prevent stream corruption
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      const base64 = buffer.toString("base64");
-      const dataUri = `data:${file.type || "application/octet-stream"};base64,${base64}`;
-
-      const cloudinaryForm = new FormData();
-      cloudinaryForm.append("file", dataUri);
-      cloudinaryForm.append("api_key", apiKey);
-      cloudinaryForm.append("timestamp", timestamp);
-      cloudinaryForm.append("signature", signature);
-
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`, {
-        method: "POST",
-        body: cloudinaryForm,
-      });
-
-      const resText = await response.text();
-
-      if (!response.ok) {
-        console.error(`Cloudinary upload failed for ${file.name} (type: ${resourceType}):`, resText);
-        throw new Error(`Cloudinary upload failed: ${response.statusText} (${resText})`);
-      }
-
-      const resData = JSON.parse(resText);
-      return NextResponse.json({ url: resData.secure_url });
-    } else {
-      // Fallback: Save in database if Cloudinary environment variables are missing
-      const prisma = (await import("@/lib/prisma")).default;
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-
-      const uploaded = await prisma.uploadedFile.create({
+    // 2. Also record in database UploadedFile table (stored inside phpMyAdmin / PostgreSQL / MySQL)
+    try {
+      await prisma.uploadedFile.create({
         data: {
-          filename: file.name || "unnamed",
+          filename: originalName,
           mimeType: file.type || "application/octet-stream",
           data: buffer,
         },
       });
-
-      return NextResponse.json({ url: `/api/uploads/${uploaded.id}` });
+    } catch (dbErr) {
+      console.warn("Could not mirror file to UploadedFile table:", dbErr);
     }
+
+    // Return the clean, self-hosted URL on our own domain
+    return NextResponse.json({ 
+      url: `/uploads/${uniqueFilename}`,
+      filename: originalName,
+      size: file.size
+    });
   } catch (error: any) {
-    console.error("Upload error:", error);
+    console.error("Self-hosted upload error:", error);
     return NextResponse.json({ error: error.message || "Upload failed" }, { status: 500 });
   }
 }

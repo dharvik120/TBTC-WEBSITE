@@ -2,7 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { Phone, Mail, MapPin, Clock } from "lucide-react";
 import prisma from "@/lib/prisma";
-import { getCompanySettings } from "@/lib/settings";
+import { getCompanySettings, getActiveCategories } from "@/lib/settings";
 
 const renderSocialIcon = (iconName: string) => {
   const name = iconName ? iconName.toLowerCase() : "";
@@ -145,11 +145,8 @@ export default async function Footer() {
   }
 
   // Fetch active categories to show in categories column
-  const categories = await prisma.category.findMany({
-    where: { isActive: true, parentId: null },
-    orderBy: { displayOrder: "asc" },
-    take: 5,
-  });
+  const allCategories = await getActiveCategories();
+  const categories = allCategories.slice(0, 5);
 
   // Fetch active social media platforms
   const socialPlatforms = await prisma.socialPlatform.findMany({

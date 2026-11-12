@@ -1,8 +1,8 @@
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 import React from "react";
 import Link from "next/link";
-import { Download, FileText, FileSpreadsheet, Layers, Info } from "lucide-react";
+import { Download, FileText, FileSpreadsheet, Layers, Info, ExternalLink } from "lucide-react";
 import prisma from "@/lib/prisma";
 
 export default async function DownloadsPage() {
@@ -28,7 +28,7 @@ export default async function DownloadsPage() {
             Technical Resources & Catalogues
           </h1>
           <p className="text-slate-500 text-sm mt-2 max-w-xl font-sans">
-            Access our general product literature, technical guides, certificates, and full catalogues.
+            Access our official product literature, technical guides, certificates, and full engineering catalogues.
           </p>
         </div>
 
@@ -38,7 +38,7 @@ export default async function DownloadsPage() {
           <div>
             <p className="font-bold mb-0.5">Looking for product-specific datasheets?</p>
             <p className="text-slate-500">
-              Detailed specifications, user manuals, and certificates for individual items (like relays, flanges, and insulators) are available directly on their respective product details pages. Browse the <Link href="/products" className="text-primary underline font-bold">Products Catalog</Link> to find specific sheets.
+              Detailed specifications, user manuals, and certificates for individual items (like relays, flanges, sensors, and filters) are available directly on their respective product details pages. Browse the <Link href="/products" className="text-primary underline font-bold">Products Catalog</Link> to find specific sheets.
             </p>
           </div>
         </div>
@@ -48,14 +48,17 @@ export default async function DownloadsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {downloads.map((doc) => {
               const isExcel = doc.fileUrl.endsWith(".xlsx") || doc.fileUrl.endsWith(".xls");
-              const isPdf = doc.fileUrl.endsWith(".pdf");
+              const isPdf = doc.fileUrl.endsWith(".pdf") || !doc.fileUrl.includes(".");
+              const cleanTitle = (doc.title || "TBTC_Catalogue").replace(/[^a-zA-Z0-9_\-]/g, "_");
+              const viewUrl = `/api/download?url=${encodeURIComponent(doc.fileUrl)}&name=${encodeURIComponent(cleanTitle)}&action=view`;
+              const downloadUrl = `/api/download?url=${encodeURIComponent(doc.fileUrl)}&name=${encodeURIComponent(cleanTitle)}&action=download`;
 
               return (
                 <div 
                   key={doc.id}
                   className="bg-white border border-slate-200 rounded-md p-5 flex items-center justify-between hover:border-slate-350 hover:shadow-sm transition-all"
                 >
-                  <div className="flex items-center gap-4 min-w-0 font-sans">
+                  <div className="flex items-center gap-4 min-w-0 font-sans flex-1">
                     <div className="p-2.5 bg-slate-50 border border-slate-200 rounded text-slate-500 shrink-0">
                       {isPdf ? (
                         <FileText className="w-6 h-6 text-red-500" />
@@ -65,8 +68,16 @@ export default async function DownloadsPage() {
                         <Layers className="w-6 h-6" />
                       )}
                     </div>
-                    <div className="min-w-0">
-                      <span className="font-bold text-slate-800 text-sm block truncate">{doc.title}</span>
+                    <div className="min-w-0 pr-3">
+                      <a 
+                        href={viewUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-bold text-slate-900 text-sm hover:text-primary transition-colors block truncate hover:underline"
+                        title="View Document in Browser"
+                      >
+                        {doc.title}
+                      </a>
                       {doc.category && (
                         <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest block mt-0.5">
                           {doc.category}
@@ -74,16 +85,25 @@ export default async function DownloadsPage() {
                       )}
                     </div>
                   </div>
-                  <a
-                    href={doc.fileUrl}
-                    download
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-2.5 hover:bg-slate-100 border border-slate-200 rounded-full text-slate-650 hover:text-slate-900 transition-colors focus:outline-none cursor-pointer"
-                    title="Download File"
-                  >
-                    <Download className="w-4 h-4" />
-                  </a>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <a
+                      href={viewUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2.5 hover:bg-slate-100 border border-slate-200 rounded-full text-slate-600 hover:text-slate-900 transition-colors focus:outline-none cursor-pointer"
+                      title="Open & View PDF"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                    <a
+                      href={downloadUrl}
+                      className="p-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-full transition-colors focus:outline-none cursor-pointer shadow-sm"
+                      title="Download File with Clean Name"
+                    >
+                      <Download className="w-4 h-4" />
+                    </a>
+                  </div>
                 </div>
               );
             })}

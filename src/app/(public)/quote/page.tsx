@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Trash2, Plus, Minus, Send, CheckCircle2, ShoppingCart, ChevronRight, AlertCircle, FileText } from "lucide-react";
 import { useQuoteCart } from "@/context/QuoteCartContext";
 import { submitQuoteRequest } from "@/app/actions/public";
+import { INTERNATIONAL_DIAL_CODES } from "@/components/ContactForm";
 
 export default function QuotePage() {
   const { cart, updateQuantity, updateNote, removeFromCart, clearCart } = useQuoteCart();
@@ -13,6 +14,7 @@ export default function QuotePage() {
     name: "",
     companyName: "",
     email: "",
+    countryDialCode: "+91",
     phone: "",
     city: "",
     state: "",
@@ -23,7 +25,7 @@ export default function QuotePage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setCustomerDetails((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
@@ -42,7 +44,11 @@ export default function QuotePage() {
       note: item.note,
     }));
 
-    const result = await submitQuoteRequest(customerDetails, items);
+    const fullPhone = `${customerDetails.countryDialCode || "+91"} ${customerDetails.phone.trim()}`;
+    const result = await submitQuoteRequest({
+      ...customerDetails,
+      phone: fullPhone,
+    }, items);
     setLoading(false);
 
     if (result.success) {
@@ -255,18 +261,33 @@ export default function QuotePage() {
                     </div>
                     <div>
                       <label htmlFor="phone" className="block text-[10px] font-bold font-mono text-slate-400 uppercase mb-1">
-                        Phone Number <span className="text-red-500">*</span>
+                        International Phone / WhatsApp <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        type="tel"
-                        id="phone"
-                        name="phone"
-                        required
-                        value={customerDetails.phone}
-                        onChange={handleInputChange}
-                        placeholder="e.g. +91 98765 43210"
-                        className="w-full border border-slate-200 rounded px-3 py-2 text-xs focus:outline-none bg-slate-50 focus:bg-white transition-colors"
-                      />
+                      <div className="flex rounded border border-slate-200 bg-slate-50 focus-within:bg-white focus-within:border-slate-400 overflow-hidden">
+                        <select
+                          name="countryDialCode"
+                          value={customerDetails.countryDialCode}
+                          onChange={handleInputChange}
+                          className="bg-slate-100 hover:bg-slate-200 border-r border-slate-200 px-2 py-2 text-xs font-mono font-bold text-slate-800 focus:outline-none cursor-pointer shrink-0"
+                          title="Country Calling Code"
+                        >
+                          {INTERNATIONAL_DIAL_CODES.map((c) => (
+                            <option key={c.code} value={c.dial}>
+                              {c.flag} {c.dial} ({c.name})
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          type="tel"
+                          id="phone"
+                          name="phone"
+                          required
+                          value={customerDetails.phone}
+                          onChange={handleInputChange}
+                          placeholder="e.g. 98765 43210"
+                          className="w-full px-3 py-2 text-xs bg-transparent focus:outline-none font-mono"
+                        />
+                      </div>
                     </div>
                   </div>
 

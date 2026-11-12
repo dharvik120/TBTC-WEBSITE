@@ -67,12 +67,12 @@ Please provide more details and a technical quotation.`;
     <div className="bg-white rounded-md border border-slate-200/80 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col group overflow-hidden">
       
       {/* Product Image Panel */}
-      <Link href={`/product/${product.slug}`} className="relative h-48 w-full bg-slate-50 flex items-center justify-center p-4 border-b border-slate-100 overflow-hidden shrink-0">
+      <Link href={`/product/${product.slug}`} className="relative h-60 sm:h-64 w-full bg-white flex items-center justify-center p-5 border-b border-slate-100 overflow-hidden shrink-0 group-hover:bg-slate-50/50 transition-colors">
         {mainImage ? (
           <img
             src={mainImage}
             alt={product.name}
-            className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-xs"
           />
         ) : (
           <div className="text-slate-400 text-xs font-mono font-bold uppercase flex flex-col items-center gap-1.5">

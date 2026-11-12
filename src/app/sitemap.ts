@@ -2,7 +2,7 @@ import { MetadataRoute } from "next";
 import prisma from "@/lib/prisma";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = "https://www.stbtcgi.in";
+  const baseUrl = "https://www.stbtcgi.com";
 
   // Fetch dynamic categories
   const categories = await prisma.category.findMany({

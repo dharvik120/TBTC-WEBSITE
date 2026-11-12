@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 import React from "react";
 import Link from "next/link";
@@ -263,24 +263,38 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   Datasheets & Downloads
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {product.documents.map((doc) => (
-                    <a
-                      key={doc.id}
-                      href={doc.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-between p-3.5 border border-slate-200 rounded-md hover:bg-slate-50 hover:border-slate-350 transition-all font-sans"
-                    >
-                      <div className="flex items-center gap-3">
-                        <FileText className="w-5.5 h-5.5 text-red-500 shrink-0" />
-                        <div>
-                          <span className="text-xs font-bold text-slate-800 block line-clamp-1">{doc.name}</span>
-                          <span className="text-[10px] text-slate-400 font-mono uppercase tracking-widest">{doc.docType}</span>
-                        </div>
+                  {product.documents.map((doc) => {
+                    const cleanDocName = (doc.name || "Datasheet").replace(/[^a-zA-Z0-9_\-.]/g, "_");
+                    const downloadUrl = `/api/download?url=${encodeURIComponent(doc.fileUrl)}&name=${encodeURIComponent(cleanDocName)}&action=download`;
+                    const viewUrl = `/api/download?url=${encodeURIComponent(doc.fileUrl)}&name=${encodeURIComponent(cleanDocName)}&action=view`;
+                    return (
+                      <div
+                        key={doc.id}
+                        className="flex items-center justify-between p-3.5 border border-slate-200 rounded-md hover:bg-slate-50 hover:border-slate-350 transition-all font-sans"
+                      >
+                        <a
+                          href={viewUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 min-w-0 flex-1 hover:text-primary transition-colors cursor-pointer"
+                          title="Open PDF"
+                        >
+                          <FileText className="w-5.5 h-5.5 text-red-500 shrink-0" />
+                          <div className="min-w-0">
+                            <span className="text-xs font-bold text-slate-800 block line-clamp-1">{doc.name}</span>
+                            <span className="text-[10px] text-slate-400 font-mono uppercase tracking-widest">{doc.docType}</span>
+                          </div>
+                        </a>
+                        <a
+                          href={downloadUrl}
+                          className="p-2 hover:bg-slate-100 rounded-full text-slate-500 hover:text-slate-900 transition-colors shrink-0 ml-2 cursor-pointer"
+                          title="Download Datasheet"
+                        >
+                          <Download className="w-4 h-4" />
+                        </a>
                       </div>
-                      <Download className="w-4 h-4 text-slate-400" />
-                    </a>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -293,7 +307,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
               productId={product.id}
               productName={product.name}
               modelNumber={product.modelNumber}
-              fields={fields}
             />
 
             {/* Quality Standard Card */}

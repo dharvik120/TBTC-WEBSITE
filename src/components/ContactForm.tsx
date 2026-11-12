@@ -1,41 +1,58 @@
 "use client";
 
 import React, { useState } from "react";
-import { Send, CheckCircle2, AlertCircle } from "lucide-react";
+import { Send, CheckCircle2, AlertCircle, Globe } from "lucide-react";
 import { submitInquiry } from "@/app/actions/public";
 
-interface FormField {
-  id: string;
-  label: string;
-  name: string;
-  type: string;
-  placeholder: string | null;
-  isRequired: boolean;
-  options: string | null;
-  helpText: string | null;
-}
+// Comprehensive international country calling codes list
+export const INTERNATIONAL_DIAL_CODES = [
+  { name: "India", code: "IN", dial: "+91", flag: "🇮🇳" },
+  { name: "United States", code: "US", dial: "+1", flag: "🇺🇸" },
+  { name: "United Kingdom", code: "GB", dial: "+44", flag: "🇬🇧" },
+  { name: "United Arab Emirates", code: "AE", dial: "+971", flag: "🇦🇪" },
+  { name: "Saudi Arabia", code: "SA", dial: "+966", flag: "🇸🇦" },
+  { name: "Germany", code: "DE", dial: "+49", flag: "🇩🇪" },
+  { name: "Singapore", code: "SG", dial: "+65", flag: "🇸🇬" },
+  { name: "Australia", code: "AU", dial: "+61", flag: "🇦🇺" },
+  { name: "Canada", code: "CA", dial: "+1", flag: "🇨🇦" },
+  { name: "Oman", code: "OM", dial: "+968", flag: "🇴🇲" },
+  { name: "Qatar", code: "QA", dial: "+974", flag: "🇶🇦" },
+  { name: "Kuwait", code: "KW", dial: "+965", flag: "🇰🇼" },
+  { name: "Bahrain", code: "BH", dial: "+973", flag: "🇧🇭" },
+  { name: "France", code: "FR", dial: "+33", flag: "🇫🇷" },
+  { name: "Italy", code: "IT", dial: "+39", flag: "🇮🇹" },
+  { name: "Netherlands", code: "NL", dial: "+31", flag: "🇳🇱" },
+  { name: "South Africa", code: "ZA", dial: "+27", flag: "🇿🇦" },
+  { name: "Nigeria", code: "NG", dial: "+234", flag: "🇳🇬" },
+  { name: "Kenya", code: "KE", dial: "+254", flag: "🇰🇪" },
+  { name: "Japan", code: "JP", dial: "+81", flag: "🇯🇵" },
+  { name: "South Korea", code: "KR", dial: "+82", flag: "🇰🇷" },
+  { name: "Malaysia", code: "MY", dial: "+60", flag: "🇲🇾" },
+  { name: "Thailand", code: "TH", dial: "+66", flag: "🇹🇭" },
+  { name: "Vietnam", code: "VN", dial: "+84", flag: "🇻🇳" },
+  { name: "Indonesia", code: "ID", dial: "+62", flag: "🇮🇩" },
+  { name: "Brazil", code: "BR", dial: "+55", flag: "🇧🇷" },
+  { name: "Mexico", code: "MX", dial: "+52", flag: "🇲🇽" },
+  { name: "Bangladesh", code: "BD", dial: "+880", flag: "🇧🇩" },
+  { name: "Sri Lanka", code: "LK", dial: "+94", flag: "🇱🇰" },
+  { name: "Nepal", code: "NP", dial: "+977", flag: "🇳🇵" },
+  { name: "Other Countries", code: "INTL", dial: "+1", flag: "🌐" },
+];
 
 interface ContactFormProps {
-  fields?: FormField[];
+  fields?: any[];
 }
 
-export default function ContactForm({ fields = [] }: ContactFormProps) {
-  // Setup dynamic form values state
-  const [formValues, setFormValues] = useState<Record<string, any>>(() => {
-    const initial: Record<string, any> = {};
-    fields.forEach((f) => {
-      initial[f.name] = "";
-    });
-    return initial;
-  });
-
-  // Fallback state for standard form
-  const [fallbackData, setFallbackData] = useState({
+export default function ContactForm({ fields }: ContactFormProps) {
+  const [formData, setFormData] = useState({
     name: "",
     companyName: "",
     email: "",
-    phone: "",
-    inquiryType: "GENERAL",
+    country: "India",
+    countryCode: "IN",
+    countryDialCode: "+91",
+    phoneNumber: "",
+    inquiryType: "SALES",
     message: "",
   });
 
@@ -43,12 +60,34 @@ export default function ContactForm({ fields = [] }: ContactFormProps) {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleDynamicChange = (name: string, value: any) => {
-    setFormValues((prev) => ({ ...prev, [name]: value }));
+  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedCountryName = e.target.value;
+    const countryObj = INTERNATIONAL_DIAL_CODES.find((c) => c.name === selectedCountryName);
+    setFormData((prev) => ({
+      ...prev,
+      country: selectedCountryName,
+      countryCode: countryObj ? countryObj.code : "IN",
+      countryDialCode: countryObj ? countryObj.dial : prev.countryDialCode,
+    }));
   };
 
-  const handleFallbackChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFallbackData((prev) => ({
+  const handleDialCodeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedCode = e.target.value;
+    const countryObj = INTERNATIONAL_DIAL_CODES.find((c) => c.code === selectedCode);
+    if (countryObj) {
+      setFormData((prev) => ({
+        ...prev,
+        country: countryObj.name,
+        countryCode: countryObj.code,
+        countryDialCode: countryObj.dial,
+      }));
+    }
+  };
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
     }));
@@ -59,58 +98,43 @@ export default function ContactForm({ fields = [] }: ContactFormProps) {
     setLoading(true);
     setError(null);
 
-    let payload: any = {};
-
-    if (fields && fields.length > 0) {
-      // Validate dynamic fields
-      for (const field of fields) {
-        if (field.isRequired && !formValues[field.name]) {
-          setError(`Please fill in the required field: ${field.label}`);
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Map standard keys for SQLite columns
-      const nameKey = fields.find((f) => f.name.toLowerCase().includes("name") || f.name.toLowerCase() === "fullname")?.name || "fullName";
-      const emailKey = fields.find((f) => f.name.toLowerCase() === "email")?.name || "email";
-      const phoneKey = fields.find((f) => f.name.toLowerCase().includes("phone") || f.name.toLowerCase() === "telephone")?.name || "phone";
-      const messageKey = fields.find((f) => f.name.toLowerCase().includes("message") || f.name.toLowerCase() === "comment")?.name || "message";
-
-      payload = {
-        name: formValues[nameKey] || "Dynamic Submitter",
-        email: formValues[emailKey] || "dynamic@tbtc.com",
-        phone: formValues[phoneKey] || "0000000000",
-        message: formValues[messageKey] || "Submitted via dynamic builder form.",
-        inquiryType: "CONTACT",
-        companyName: formValues.companyName || formValues.company || "",
-        dynamicValues: formValues
-      };
-    } else {
-      // Fallback submission logic
-      payload = {
-        name: fallbackData.name,
-        companyName: fallbackData.companyName,
-        email: fallbackData.email,
-        phone: fallbackData.phone,
-        inquiryType: fallbackData.inquiryType,
-        message: fallbackData.message,
-      };
+    if (!formData.name.trim() || !formData.email.trim() || !formData.phoneNumber.trim() || !formData.message.trim()) {
+      setError("Please fill out all required fields marked with an asterisk (*).");
+      setLoading(false);
+      return;
     }
+
+    const fullInternationalPhone = `${formData.countryDialCode} ${formData.phoneNumber.trim()}`;
+
+    const payload = {
+      name: formData.name.trim(),
+      companyName: formData.companyName.trim() || undefined,
+      email: formData.email.trim(),
+      phone: fullInternationalPhone,
+      inquiryType: formData.inquiryType,
+      message: formData.message.trim(),
+      dynamicValues: {
+        country: formData.country,
+        countryCallingCode: formData.countryDialCode,
+        localPhoneNumber: formData.phoneNumber.trim(),
+        fullInternationalPhone: fullInternationalPhone,
+      },
+    };
 
     const result = await submitInquiry(payload);
     setLoading(false);
 
     if (result.success) {
       setSuccess(true);
-      // Reset
-      setFormValues({});
-      setFallbackData({
+      setFormData({
         name: "",
         companyName: "",
         email: "",
-        phone: "",
-        inquiryType: "GENERAL",
+        country: "India",
+        countryCode: "IN",
+        countryDialCode: "+91",
+        phoneNumber: "",
+        inquiryType: "SALES",
         message: "",
       });
     } else {
@@ -122,9 +146,9 @@ export default function ContactForm({ fields = [] }: ContactFormProps) {
     return (
       <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-md p-8 text-center space-y-4 font-sans shadow-sm animate-fadeIn">
         <CheckCircle2 className="w-12 h-12 text-emerald-600 mx-auto animate-pulse" />
-        <h3 className="text-lg font-bold">Message Sent Successfully!</h3>
+        <h3 className="text-lg font-bold">Inquiry Transmitted Successfully!</h3>
         <p className="text-xs text-emerald-700 max-w-sm mx-auto leading-relaxed">
-          Your inquiry has been stored in our system. Shree TBTC Global Industries sales or technical teams will review your request and get back to you shortly.
+          Your inquiry has been logged into our global ERP pipeline. A technical sales executive from Shree TBTC Global Industries will contact you shortly with formal specifications and quotation.
         </p>
         <button
           onClick={() => setSuccess(false)}
@@ -139,9 +163,15 @@ export default function ContactForm({ fields = [] }: ContactFormProps) {
 
   return (
     <div className="bg-white border border-slate-200 rounded-md p-6 lg:p-8 font-sans shadow-sm">
-      <h2 className="text-xl font-bold text-slate-800 mb-2">Send an Inquiry</h2>
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-xl font-bold text-slate-900">Send an International Inquiry</h2>
+        <span className="flex items-center gap-1 text-[10px] font-mono font-bold uppercase text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+          <Globe className="w-3.5 h-3.5 text-primary" />
+          Global Sales Desk
+        </span>
+      </div>
       <p className="text-slate-500 text-xs mb-6">
-        Fill out this form and we will route your query to the appropriate technical sales executive.
+        Please fill out this form with your country code and requirements. Our technical sales desk will review and reply within 24 business hours.
       </p>
 
       {error && (
@@ -152,204 +182,164 @@ export default function ContactForm({ fields = [] }: ContactFormProps) {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {fields && fields.length > 0 ? (
-          // DYNAMIC FORM BUILDER ELEMENTS RENDERER
-          fields.map((field) => {
-            const optionsList = field.options ? field.options.split(",").map((o) => o.trim()) : [];
-            
-            return (
-              <div key={field.id} className="space-y-1">
-                <label className="block text-[11px] font-bold font-mono text-slate-500 uppercase">
-                  {field.label} {field.isRequired && <span className="text-red-500">*</span>}
-                </label>
+        {/* Full Name & Company */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="name" className="block text-[11px] font-bold font-mono text-slate-500 uppercase mb-1">
+              Full Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              required
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="e.g. John Doe / Mohammed Al-Falasi"
+              className="w-full border border-slate-200 rounded px-3 py-2 text-xs focus:outline-none bg-slate-50 focus:bg-white transition-colors"
+            />
+          </div>
 
-                {field.type === "TEXTAREA" ? (
-                  <textarea
-                    required={field.isRequired}
-                    rows={4}
-                    value={formValues[field.name] || ""}
-                    onChange={(e) => handleDynamicChange(field.name, e.target.value)}
-                    placeholder={field.placeholder || "Enter details..."}
-                    className="w-full border border-slate-200 rounded px-3 py-2 text-xs focus:outline-none bg-slate-50 focus:bg-white transition-colors resize-y"
-                  />
-                ) : field.type === "SELECT" ? (
-                  <select
-                    required={field.isRequired}
-                    value={formValues[field.name] || ""}
-                    onChange={(e) => handleDynamicChange(field.name, e.target.value)}
-                    className="w-full border border-slate-200 rounded px-3 py-2 text-xs focus:outline-none bg-slate-50 focus:bg-white transition-colors cursor-pointer"
-                  >
-                    <option value="">-- Select Option --</option>
-                    {optionsList.map((o, idx) => (
-                      <option key={idx} value={o}>{o}</option>
-                    ))}
-                  </select>
-                ) : field.type === "CHECKBOX" ? (
-                  <div className="flex flex-wrap gap-3 py-1.5">
-                    {optionsList.map((o, idx) => {
-                      const currentVals = Array.isArray(formValues[field.name]) ? formValues[field.name] : [];
-                      const isChecked = currentVals.includes(o);
-                      return (
-                        <label key={idx} className="flex items-center gap-2 text-slate-700 text-xs cursor-pointer select-none">
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={() => {
-                              const next = isChecked ? currentVals.filter((v: string) => v !== o) : [...currentVals, o];
-                              handleDynamicChange(field.name, next);
-                            }}
-                            className="w-4 h-4 rounded text-primary border-slate-350 cursor-pointer"
-                          />
-                          <span>{o}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                ) : field.type === "RADIO" ? (
-                  <div className="flex flex-wrap gap-4 py-1.5">
-                    {optionsList.map((o, idx) => (
-                      <label key={idx} className="flex items-center gap-2 text-slate-700 text-xs cursor-pointer select-none">
-                        <input
-                          type="radio"
-                          name={field.name}
-                          value={o}
-                          checked={formValues[field.name] === o}
-                          onChange={() => handleDynamicChange(field.name, o)}
-                          className="w-4 h-4 text-primary border-slate-350 cursor-pointer"
-                        />
-                        <span>{o}</span>
-                      </label>
-                    ))}
-                  </div>
-                ) : (
-                  <input
-                    type={field.type.toLowerCase()}
-                    required={field.isRequired}
-                    value={formValues[field.name] || ""}
-                    onChange={(e) => handleDynamicChange(field.name, e.target.value)}
-                    placeholder={field.placeholder || ""}
-                    className="w-full border border-slate-200 rounded px-3 py-2 text-xs focus:outline-none bg-slate-50 focus:bg-white transition-colors"
-                  />
-                )}
-                
-                {field.helpText && (
-                  <span className="text-[10px] text-slate-400 block mt-0.5">{field.helpText}</span>
-                )}
-              </div>
-            );
-          })
-        ) : (
-          // STATIC FALLBACK
-          <>
-            <div>
-              <label htmlFor="name" className="block text-[11px] font-bold font-mono text-slate-400 uppercase mb-1">
-                Your Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                required
-                value={fallbackData.name}
-                onChange={handleFallbackChange}
-                placeholder="e.g. John Doe"
-                className="w-full border border-slate-200 rounded px-3 py-2 text-xs focus:outline-none bg-slate-50 focus:bg-white transition-colors"
-              />
-            </div>
+          <div>
+            <label htmlFor="companyName" className="block text-[11px] font-bold font-mono text-slate-500 uppercase mb-1">
+              Company / Organization
+            </label>
+            <input
+              type="text"
+              id="companyName"
+              name="companyName"
+              value={formData.companyName}
+              onChange={handleChange}
+              placeholder="e.g. Global Power Systems LLC"
+              className="w-full border border-slate-200 rounded px-3 py-2 text-xs focus:outline-none bg-slate-50 focus:bg-white transition-colors"
+            />
+          </div>
+        </div>
 
-            <div>
-              <label htmlFor="companyName" className="block text-[11px] font-bold font-mono text-slate-400 uppercase mb-1">
-                Company Name
-              </label>
-              <input
-                type="text"
-                id="companyName"
-                name="companyName"
-                value={fallbackData.companyName}
-                onChange={handleFallbackChange}
-                placeholder="e.g. Acme Controls Ltd"
-                className="w-full border border-slate-200 rounded px-3 py-2 text-xs focus:outline-none bg-slate-50 focus:bg-white transition-colors"
-              />
-            </div>
+        {/* Country & Email */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="country" className="block text-[11px] font-bold font-mono text-slate-500 uppercase mb-1">
+              Country / Region <span className="text-red-500">*</span>
+            </label>
+            <select
+              id="country"
+              name="country"
+              required
+              value={formData.country}
+              onChange={handleCountryChange}
+              className="w-full border border-slate-200 rounded px-3 py-2 text-xs focus:outline-none bg-slate-50 focus:bg-white transition-colors cursor-pointer"
+            >
+              {INTERNATIONAL_DIAL_CODES.map((c) => (
+                <option key={c.name} value={c.name}>
+                  {c.flag} {c.name} ({c.dial})
+                </option>
+              ))}
+            </select>
+          </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="email" className="block text-[11px] font-bold font-mono text-slate-400 uppercase mb-1">
-                  Email Address <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  required
-                  value={fallbackData.email}
-                  onChange={handleFallbackChange}
-                  placeholder="e.g. buyer@company.com"
-                  className="w-full border border-slate-200 rounded px-3 py-2 text-xs focus:outline-none bg-slate-50 focus:bg-white transition-colors"
-                />
-              </div>
-              <div>
-                <label htmlFor="phone" className="block text-[11px] font-bold font-mono text-slate-400 uppercase mb-1">
-                  Phone Number <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  required
-                  value={fallbackData.phone}
-                  onChange={handleFallbackChange}
-                  placeholder="e.g. +91 98765 43210"
-                  className="w-full border border-slate-200 rounded px-3 py-2 text-xs focus:outline-none bg-slate-50 focus:bg-white transition-colors"
-                />
-              </div>
-            </div>
+          <div>
+            <label htmlFor="email" className="block text-[11px] font-bold font-mono text-slate-500 uppercase mb-1">
+              Corporate Email <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              required
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="e.g. procurement@company.com"
+              className="w-full border border-slate-200 rounded px-3 py-2 text-xs focus:outline-none bg-slate-50 focus:bg-white transition-colors"
+            />
+          </div>
+        </div>
 
-            <div>
-              <label htmlFor="inquiryType" className="block text-[11px] font-bold font-mono text-slate-400 uppercase mb-1">
-                Inquiry Type <span className="text-red-500">*</span>
-              </label>
+        {/* International Calling Code + Phone Number & Inquiry Type */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="phoneNumber" className="block text-[11px] font-bold font-mono text-slate-500 uppercase mb-1">
+              International Phone / WhatsApp <span className="text-red-500">*</span>
+            </label>
+            <div className="flex rounded border border-slate-200 bg-slate-50 focus-within:bg-white focus-within:border-slate-400 overflow-hidden">
+              {/* Country dial code select */}
               <select
-                id="inquiryType"
-                name="inquiryType"
-                required
-                value={fallbackData.inquiryType}
-                onChange={handleFallbackChange}
-                className="w-full border border-slate-200 rounded px-3 py-2 text-xs focus:outline-none bg-slate-50 focus:bg-white transition-colors cursor-pointer"
+                name="countryCode"
+                value={formData.countryCode}
+                onChange={handleDialCodeChange}
+                className="bg-slate-100 hover:bg-slate-200 border-r border-slate-200 px-2.5 py-2 text-xs font-mono font-bold text-slate-800 focus:outline-none cursor-pointer shrink-0 transition-colors"
+                title="Select Country Calling Code"
+                aria-label="Country Calling Code"
               >
-                <option value="GENERAL">General Information</option>
-                <option value="TECHNICAL">Technical Specifications / Support</option>
-                <option value="SALES">Sales / RFQ / Custom Order</option>
+                {INTERNATIONAL_DIAL_CODES.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.flag} {c.dial} ({c.name})
+                  </option>
+                ))}
               </select>
-            </div>
-
-            <div>
-              <label htmlFor="message" className="block text-[11px] font-bold font-mono text-slate-400 uppercase mb-1">
-                Message details <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                id="message"
-                name="message"
+              {/* Phone number digits input */}
+              <input
+                type="tel"
+                id="phoneNumber"
+                name="phoneNumber"
                 required
-                rows={5}
-                value={fallbackData.message}
-                onChange={handleFallbackChange}
-                placeholder="Type your message details here..."
-                className="w-full border border-slate-200 rounded px-3 py-2 text-xs focus:outline-none bg-slate-50 focus:bg-white transition-colors resize-y"
+                value={formData.phoneNumber}
+                onChange={handleChange}
+                placeholder="e.g. 98765 43210 / 555-0199"
+                className="w-full px-3 py-2 text-xs bg-transparent focus:outline-none font-mono"
               />
             </div>
-          </>
-        )}
+            <span className="text-[10px] text-slate-400 mt-0.5 block">
+              Format: {formData.countryDialCode} [Your local number]
+            </span>
+          </div>
+
+          <div>
+            <label htmlFor="inquiryType" className="block text-[11px] font-bold font-mono text-slate-500 uppercase mb-1">
+              Inquiry Classification <span className="text-red-500">*</span>
+            </label>
+            <select
+              id="inquiryType"
+              name="inquiryType"
+              required
+              value={formData.inquiryType}
+              onChange={handleChange}
+              className="w-full border border-slate-200 rounded px-3 py-2 text-xs focus:outline-none bg-slate-50 focus:bg-white transition-colors cursor-pointer"
+            >
+              <option value="SALES">Sales / Price Quotation (RFQ)</option>
+              <option value="TECHNICAL">Technical Specifications & Datasheets</option>
+              <option value="GENERAL">General Procurement Inquiry</option>
+              <option value="EXPORT">Export / International Shipment</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Message */}
+        <div>
+          <label htmlFor="message" className="block text-[11px] font-bold font-mono text-slate-500 uppercase mb-1">
+            Material & Quantity Specifications <span className="text-red-500">*</span>
+          </label>
+          <textarea
+            id="message"
+            name="message"
+            required
+            rows={5}
+            value={formData.message}
+            onChange={handleChange}
+            placeholder="Please state product models, required quantities, destination port/country, and required delivery timeline..."
+            className="w-full border border-slate-200 rounded px-3 py-2 text-xs focus:outline-none bg-slate-50 focus:bg-white transition-colors resize-y font-sans"
+          />
+        </div>
 
         {/* Submit Button */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full flex items-center justify-center gap-2 py-2.5 text-xs font-bold text-white shadow-sm rounded transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer uppercase font-mono tracking-wider"
+          className="w-full flex items-center justify-center gap-2 py-3 text-xs font-bold text-white shadow-sm rounded transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer uppercase font-mono tracking-wider hover:opacity-95"
           style={{ backgroundColor: "var(--primary-color)" }}
         >
           <Send className="w-3.5 h-3.5" />
-          <span>{loading ? "Sending..." : "Submit Inquiry"}</span>
+          <span>{loading ? "Transmitting..." : "Submit Global Inquiry"}</span>
         </button>
       </form>
     </div>

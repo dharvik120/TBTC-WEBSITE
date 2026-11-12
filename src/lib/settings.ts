@@ -2,12 +2,53 @@ import prisma from "./prisma";
 import { cache } from "react";
 import { CompanySettings } from "@prisma/client";
 
+let cachedSettings: CompanySettings | null = null;
+let lastFetchTime = 0;
+let cachedCategories: any[] | null = null;
+let lastCategoriesFetchTime = 0;
+const CACHE_TTL_MS = 60 * 1000; // 60 seconds memory cache
+
+export function clearSettingsCache() {
+  cachedSettings = null;
+  lastFetchTime = 0;
+  cachedCategories = null;
+  lastCategoriesFetchTime = 0;
+}
+
+export const getActiveCategories = cache(async () => {
+  if (cachedCategories && Date.now() - lastCategoriesFetchTime < CACHE_TTL_MS) {
+    return cachedCategories;
+  }
+
+  const categories = await prisma.category.findMany({
+    where: { isActive: true, parentId: null },
+    orderBy: { displayOrder: "asc" },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+    },
+  });
+
+  cachedCategories = categories;
+  lastCategoriesFetchTime = Date.now();
+  return categories;
+});
+
 export const getCompanySettings = cache(async (): Promise<CompanySettings> => {
+  if (cachedSettings && Date.now() - lastFetchTime < CACHE_TTL_MS) {
+    return cachedSettings;
+  }
+
   const settings = await prisma.companySettings.findUnique({
     where: { id: "singleton" },
   });
 
-  if (!settings) {
+  if (settings) {
+    cachedSettings = settings;
+    lastFetchTime = Date.now();
+    return settings;
+  }
     // Fallback if DB was not seeded for some reason
     return {
       id: "singleton",
@@ -24,7 +65,7 @@ export const getCompanySettings = cache(async (): Promise<CompanySettings> => {
       buttonColor: "#0b3c5d",
       buttonHoverColor: "#0d4870",
       linkColor: "#0b3c5d",
-      email: "info@stbtcgi.in",
+      email: "sales@stbtcgi.com",
       phoneNumbers: "+91-9331404702, +91-8240450043, +91-9038707773",
       whatsAppNumber: "+919331404702",
       address: "Flat No: 302, 14/1 Sree Kishen Bhakat Lane, Howrah - 711101, West Bengal, India",
@@ -128,9 +169,6 @@ export const getCompanySettings = cache(async (): Promise<CompanySettings> => {
       seoTitleDefault: "Shree TBTC Global Industries | Industrial Electrical & Automation",
       seoDescriptionDefault: "Shree TBTC Global Industries is a leading importer and dealer of Electrical Switchgear, Industrial Steels, Lubricants/Greases, Compressor Filters, and Tip Insulators.",
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
-  }
-
-  return settings;
 });

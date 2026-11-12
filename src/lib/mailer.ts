@@ -12,7 +12,7 @@ export async function sendMail({ to, subject, text, html }: SendMailOptions) {
   const port = parseInt(process.env.SMTP_PORT || "587");
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
-  const from = process.env.SMTP_FROM || `"Shree TBTC Portal" <no-reply@stbtcgi.in>`;
+  const from = process.env.SMTP_FROM || `"Shree TBTC Portal" <sales@stbtcgi.com>`;
 
   // Fallback: If SMTP is not configured, print to console so they can test immediately!
   if (!host || !user || !pass) {

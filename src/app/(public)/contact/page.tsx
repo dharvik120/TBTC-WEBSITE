@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 import React from "react";
 import Link from "next/link";
@@ -9,11 +9,6 @@ import ContactForm from "@/components/ContactForm";
 
 export default async function ContactPage() {
   const settings = await getCompanySettings();
-  const fields = await prisma.formField.findMany({
-    where: { isActive: true, formType: "CONTACT" },
-    orderBy: { displayOrder: "asc" }
-  });
-
   const phones = settings.phoneNumbers ? settings.phoneNumbers.split(",").map(p => p.trim()) : [];
 
   return (
@@ -125,7 +120,7 @@ export default async function ContactPage() {
 
           {/* Right Column: Form */}
           <div className="lg:col-span-7">
-            <ContactForm fields={fields} />
+            <ContactForm />
           </div>
         </div>
       </div>

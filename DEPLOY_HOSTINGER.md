@@ -1,53 +1,67 @@
 # Hostinger Deployment Guide for Shree TBTC Website
 
-This document explains how to deploy your Next.js website to **Hostinger** securely, keeping your database and Cloudinary keys fully hidden from the public Git repository.
+This document explains how to deploy your Next.js website to **Hostinger Premium Hosting / VPS** securely, keeping your database credentials and API keys fully protected.
 
 ---
 
 ## 🔒 Security First: Keeping API Keys Hidden
-All credentials (`DATABASE_URL`, Cloudinary API Keys, etc.) are stored inside the `.env` file. 
-* This file is listed in `.gitignore` and is **never** pushed to GitHub.
-* When hosting on Hostinger, you will create/upload this `.env` file directly to your server, where it remains 100% private.
+All credentials (`DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, SMTP credentials) are stored inside your private `.env` file on the server.
+* `.env` is listed in `.gitignore` and must **NEVER** be committed to public Git repositories.
+* When deploying on Hostinger, create this `.env` file directly inside your application folder on Hostinger.
 
 ---
 
 ## 🛠️ Step 1: Create your `.env` file on Hostinger
-When you set up your Node.js application folder on Hostinger (usually under `/home/username/public_html` or similar), create a file named `.env` in the root of that project folder and paste the following content:
+When you set up your Node.js application folder on Hostinger (usually under `/home/username/public_html` or similar), create a file named `.env` in the root of that project folder and fill in your values (see `.env.example`):
 
 ```env
-DATABASE_URL="postgresql://postgres.mpiwhfhelhiyfgyfcsjo:kAcZgxzM1aNDtz9D@aws-0-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true"
-DIRECT_URL="postgresql://postgres.mpiwhfhelhiyfgyfcsjo:kAcZgxzM1aNDtz9D@aws-0-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require"
-JWT_SECRET="stbt_secret_key_12345_industrial_portal"
+DATABASE_URL="postgresql://username:password@your-database-host:6543/postgres?sslmode=require&pgbouncer=true"
+DIRECT_URL="postgresql://username:password@your-database-host:5432/postgres?sslmode=require"
+JWT_SECRET="your_long_random_secret_key"
 NODE_ENV="production"
 
-# Cloudinary Storage Configuration
-CLOUDINARY_CLOUD_NAME="ye4tjvdy"
-CLOUDINARY_API_KEY="565125531498358"
-CLOUDINARY_API_SECRET="mvZpYJwJvGUEZ_Vv7ICLi93N_6c"
-CLOUDINARY_URL="cloudinary://565125531498358:mvZpYJwJvGUEZ_Vv7ICLi93N_6c@ye4tjvdy"
+# Optional: SMTP Configuration for instant inquiries & quote delivery to sales@stbtcgi.com
+SMTP_HOST="smtp.hostinger.com"
+SMTP_PORT=465
+SMTP_USER="sales@stbtcgi.com"
+SMTP_PASS="your_email_password"
+SMTP_FROM="Shree TBTC Global Industries <sales@stbtcgi.com>"
+SALES_NOTIFICATION_EMAIL="sales@stbtcgi.com"
 ```
 
 ---
 
 ## 🚀 Step 2: Deploying to Hostinger
 
-### Option A: Using Hostinger VPS (Recommended & Most Flexible)
-If you have a Hostinger Virtual Private Server (VPS) with Node.js installed:
-
-1. **Clone the repository** to your VPS folder:
+### Option A: Using Hostinger Node.js Dashboard (hPanel)
+1. In Hostinger hPanel, go to **Websites** -> **Node.js**:
+   * Set Node.js version to **v20** or **v22**.
+   * Set **Application Root** to your project folder.
+   * Set **Application Startup File** to `server.js` (or `node_modules/next/dist/bin/next` with argument `start`).
+2. Upload your website files (excluding `node_modules` and `.next`).
+3. Upload your `.env` file with your credentials.
+4. Click **NPM Install** in hPanel.
+5. In terminal or hPanel console, run:
    ```bash
-   git clone https://github.com/dharvik120/TBTC-WEBSITE.git
-   cd TBTC-WEBSITE
-   ```
-2. **Create the `.env` file** (as shown in Step 1) inside this directory.
-3. **Install dependencies and build the app**:
-   ```bash
-   npm install
+   npx prisma generate
    npm run build
    ```
-4. **Start the application** using PM2 to keep it running forever in the background:
+6. Click **Restart Application** in hPanel.
+
+### Option B: Using Hostinger VPS with PM2 (Fastest & Maximum Performance)
+1. SSH into your VPS:
    ```bash
-   npm install -g pm2
+   cd /var/www/tbtc-website
+   ```
+2. Upload or clone the code, and create your `.env` file.
+3. Install dependencies and build:
+   ```bash
+   npm install
+   npx prisma generate
+   npm run build
+   ```
+4. Start with PM2:
+   ```bash
    pm2 start npm --name "tbtc-website" -- start
    pm2 save
    pm2 startup
@@ -55,23 +69,7 @@ If you have a Hostinger Virtual Private Server (VPS) with Node.js installed:
 
 ---
 
-### Option B: Using Hostinger hPanel Node.js Dashboard (Shared/Cloud Startup)
-If you are using Hostinger Shared Node.js hosting:
-
-1. **Upload the build files**:
-   * Zip the codebase (excluding `node_modules` and `.next`).
-   * Upload and extract it inside Hostinger File Manager in your app directory.
-2. **Create the `.env` file** (as shown in Step 1) in the File Manager inside the root folder.
-3. **Go to Hostinger Node.js Dashboard**:
-   * Select Node.js version **18 or 20**.
-   * Set **Document Root** to the folder where files are uploaded.
-   * Set **App startup file** to `node_modules/next/dist/bin/next` and options to `start`.
-4. **Install and Run**:
-   * Click **NPM Install** in the Hostinger hPanel Node.js dashboard.
-   * Click **Run Build** or execute `npm run build` using the Hostinger console.
-   * Click **Start** to run the app.
-
----
-
-## 🌐 Verification
-Once deployed and connected to your domain, upload any image, PDF brochure, or Excel datasheet inside your admin panel. The files will upload directly to Cloudinary and display beautifully on the public website!
+## ⚡ Performance & Self-Hosted Storage
+* **Self-Hosted Storage**: All images, brochures, and catalogues uploaded via the Admin panel are saved directly to `public/uploads/` on your server and mirrored in the database.
+* **Super Fast**: Assets are served directly with immutable HTTP caching headers.
+* **Supabase 24x7 Keep-Alive**: The built-in `/api/health` route automatically keeps the Supabase PostgreSQL connection active so your free database never pauses!
