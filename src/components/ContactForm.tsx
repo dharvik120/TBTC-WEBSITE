@@ -262,12 +262,12 @@ export default function ContactForm({ fields }: ContactFormProps) {
               International Phone / WhatsApp <span className="text-red-500">*</span>
             </label>
             <div className="flex rounded border border-slate-200 bg-slate-50 focus-within:bg-white focus-within:border-slate-400 overflow-hidden">
-              {/* Country dial code select */}
+              {/* Compact Country dial code select */}
               <select
                 name="countryCode"
                 value={formData.countryCode}
                 onChange={handleDialCodeChange}
-                className="bg-slate-100 hover:bg-slate-200 border-r border-slate-200 px-2.5 py-2 text-xs font-mono font-bold text-slate-800 focus:outline-none cursor-pointer shrink-0 transition-colors"
+                className="w-[85px] sm:w-[92px] shrink-0 bg-slate-100 hover:bg-slate-200 border-r border-slate-200 px-2 py-2 text-xs font-mono font-bold text-slate-800 focus:outline-none cursor-pointer transition-colors"
                 title="Select Country Calling Code"
                 aria-label="Country Calling Code"
               >
@@ -277,7 +277,7 @@ export default function ContactForm({ fields }: ContactFormProps) {
                   </option>
                 ))}
               </select>
-              {/* Phone number digits input */}
+              {/* Spacious Phone number digits input */}
               <input
                 type="tel"
                 id="phoneNumber"
@@ -286,7 +286,7 @@ export default function ContactForm({ fields }: ContactFormProps) {
                 value={formData.phoneNumber}
                 onChange={handleChange}
                 placeholder="e.g. 98765 43210 / 555-0199"
-                className="w-full px-3 py-2 text-xs bg-transparent focus:outline-none font-mono"
+                className="flex-1 min-w-0 w-full px-3 py-2 text-xs bg-transparent focus:outline-none font-mono"
               />
             </div>
             <span className="text-[10px] text-slate-400 mt-0.5 block">

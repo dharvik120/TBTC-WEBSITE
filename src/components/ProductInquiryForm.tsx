@@ -280,52 +280,58 @@ export default function ProductInquiryForm({ productId, productName, modelNumber
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="email" className="block text-[11px] font-bold font-mono text-slate-400 uppercase mb-1">
-                  Email Address <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  required
-                  value={fallbackData.email}
+            {/* Email Address */}
+            <div>
+              <label htmlFor="email" className="block text-[11px] font-bold font-mono text-slate-400 uppercase mb-1">
+                Email Address <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                required
+                value={fallbackData.email}
+                onChange={handleFallbackChange}
+                placeholder="e.g. contact@company.com"
+                className="w-full border border-slate-200 rounded px-3 py-2 text-xs focus:outline-none bg-slate-50 focus:bg-white transition-colors"
+              />
+            </div>
+
+            {/* International Phone / WhatsApp */}
+            <div>
+              <label htmlFor="phone" className="block text-[11px] font-bold font-mono text-slate-400 uppercase mb-1">
+                International Phone / WhatsApp <span className="text-red-500">*</span>
+              </label>
+              <div className="flex rounded border border-slate-200 bg-slate-50 focus-within:bg-white focus-within:border-slate-400 overflow-hidden w-full">
+                {/* Compact country calling code selector */}
+                <select
+                  name="countryDialCode"
+                  value={fallbackData.countryDialCode}
                   onChange={handleFallbackChange}
-                  placeholder="e.g. contact@company.com"
-                  className="w-full border border-slate-200 rounded px-3 py-2 text-xs focus:outline-none bg-slate-50 focus:bg-white transition-colors"
+                  className="w-[82px] shrink-0 bg-slate-100 hover:bg-slate-200 border-r border-slate-200 px-2 py-2 text-xs font-mono font-bold text-slate-800 focus:outline-none cursor-pointer"
+                  title="Select Country Calling Code"
+                >
+                  {INTERNATIONAL_DIAL_CODES.map((c) => (
+                    <option key={c.code} value={c.dial}>
+                      {c.flag} {c.dial} ({c.name})
+                    </option>
+                  ))}
+                </select>
+                {/* Large spacious phone number input */}
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  required
+                  value={fallbackData.phone}
+                  onChange={handleFallbackChange}
+                  placeholder="e.g. 98765 43210 / 555-0199"
+                  className="flex-1 min-w-0 w-full px-3 py-2 text-xs bg-transparent focus:outline-none font-mono"
                 />
               </div>
-              <div>
-                <label htmlFor="phone" className="block text-[11px] font-bold font-mono text-slate-400 uppercase mb-1">
-                  International Phone / WhatsApp <span className="text-red-500">*</span>
-                </label>
-                <div className="flex rounded border border-slate-200 bg-slate-50 focus-within:bg-white focus-within:border-slate-400 overflow-hidden">
-                  <select
-                    name="countryDialCode"
-                    value={fallbackData.countryDialCode}
-                    onChange={handleFallbackChange}
-                    className="bg-slate-100 hover:bg-slate-200 border-r border-slate-200 px-2 py-2 text-xs font-mono font-bold text-slate-800 focus:outline-none cursor-pointer shrink-0"
-                    title="Country Calling Code"
-                  >
-                    {INTERNATIONAL_DIAL_CODES.map((c) => (
-                      <option key={c.code} value={c.dial}>
-                        {c.flag} {c.dial} ({c.name})
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    required
-                    value={fallbackData.phone}
-                    onChange={handleFallbackChange}
-                    placeholder="e.g. 98765 43210 / 555-0199"
-                    className="w-full px-3 py-2 text-xs bg-transparent focus:outline-none font-mono"
-                  />
-                </div>
-              </div>
+              <span className="text-[10px] text-slate-400 mt-1 block">
+                Selected Code: {fallbackData.countryDialCode} (Include your area code &amp; local number)
+              </span>
             </div>
 
             <div>

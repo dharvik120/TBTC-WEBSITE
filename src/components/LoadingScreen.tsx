@@ -3,140 +3,176 @@
 import React, { useEffect, useState } from "react";
 
 export default function LoadingScreen() {
-  const [visible, setVisible] = useState(true);
-  const [progress, setProgress] = useState(0);
-  const [fadeOut, setFadeOut] = useState(false);
+  const [mounted, setMounted] = useState(true);
 
   useEffect(() => {
-    // Progress counter animation from 0 to 100%
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        const step = prev < 40 ? 6 : prev < 80 ? 10 : 15;
-        return Math.min(100, prev + step);
-      });
-    }, 45);
+    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setMounted(false);
+      return;
+    }
 
-    // Fade out after 1.6s
+    // Fade out and unmount cleanly after full animation cycle
     const timer = setTimeout(() => {
-      setFadeOut(true);
-      setTimeout(() => {
-        setVisible(false);
-      }, 600);
-    }, 1600);
+      setMounted(false);
+    }, 2450);
 
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timer);
-    };
+    return () => clearTimeout(timer);
   }, []);
 
-  if (!visible) return null;
+  if (!mounted) return null;
 
   return (
-    <div
-      id="tbtc-app-loader"
-      className={`fixed inset-0 z-[999999] bg-slate-950 flex flex-col items-center justify-center font-sans select-none ${
-        fadeOut ? "opacity-0 pointer-events-none" : "opacity-100"
-      }`}
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100vw",
-        height: "100vh",
-        backgroundColor: "#020617",
-        zIndex: 999999,
-        transition: "opacity 0.6s ease-in-out",
-      }}
-    >
-      {/* Background radial glow & technical grid pattern */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(11,60,93,0.35)_0%,rgba(2,6,23,0.98)_75%)]" />
-      <div 
-        className="absolute inset-0 opacity-15 pointer-events-none"
-        style={{
-          backgroundImage: "linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)",
-          backgroundSize: "32px 32px",
-        }}
-      />
+    <div className="tbtc-logo-loader" aria-hidden="true">
+      <style dangerouslySetInnerHTML={{ __html: `
+        .tbtc-logo-loader {
+          position: fixed;
+          inset: 0;
+          z-index: 999999;
+          background: #ffffff;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          pointer-events: none;
+          animation: 0.45s 2.05s forwards tbtc-loader-out;
+        }
 
-      {/* Main Container */}
-      <div className="relative z-10 flex flex-col items-center px-6 max-w-md w-full text-center">
-        
-        {/* Logo Card with Synchronized Animated Lines */}
-        <div className="relative p-6 sm:p-8 bg-slate-900/95 border border-slate-800 rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] backdrop-blur-md mb-6 overflow-hidden">
-          
-          {/* Top Line Animation */}
-          <div 
-            className="absolute top-0 left-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent"
-            style={{ width: `${progress}%`, transition: "width 0.1s linear" }}
-          />
+        .tbtc-loader-logo {
+          width: min(340px, 68vw);
+          height: auto;
+          display: block;
+          animation: 0.5s 1.7s both tbtc-brand-pulse;
+        }
 
-          {/* Right Line Animation */}
-          <div 
-            className="absolute top-0 right-0 w-[2px] bg-gradient-to-b from-transparent via-cyan-400 to-transparent"
-            style={{ height: `${progress}%`, transition: "height 0.1s linear" }}
-          />
+        .tbtc-reveal-emblem-1 {
+          stroke-dasharray: 1;
+          stroke-dashoffset: 1px;
+          animation: 1.15s ease-in-out 0.1s forwards tbtc-draw-brand;
+        }
 
-          {/* Bottom Line Animation */}
-          <div 
-            className="absolute bottom-0 right-0 h-[2px] bg-gradient-to-l from-transparent via-red-500 to-transparent"
-            style={{ width: `${progress}%`, transition: "width 0.1s linear" }}
-          />
+        .tbtc-reveal-emblem-2 {
+          stroke-dasharray: 1;
+          stroke-dashoffset: 1px;
+          animation: 0.95s ease-in-out 0.35s forwards tbtc-draw-brand;
+        }
 
-          {/* Left Line Animation */}
-          <div 
-            className="absolute bottom-0 left-0 w-[2px] bg-gradient-to-t from-transparent via-red-500 to-transparent"
-            style={{ height: `${progress}%`, transition: "height 0.1s linear" }}
-          />
+        .tbtc-reveal-emblem-3 {
+          stroke-dasharray: 1;
+          stroke-dashoffset: 1px;
+          animation: 0.85s ease-in-out 0.5s forwards tbtc-draw-brand;
+        }
 
-          {/* High-Tech Glowing Laser Scanner Line */}
-          <div 
-            className="absolute inset-x-0 h-[3px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_15px_#38bdf8] pointer-events-none"
-            style={{
-              top: `${progress}%`,
-              transition: "top 0.1s linear",
-            }}
-          />
+        .tbtc-reveal-type {
+          opacity: 0;
+          animation: 0.5s 1.25s forwards tbtc-fade-in;
+        }
 
-          {/* Full Logo Display */}
-          <div className="relative z-10 flex items-center justify-center p-2">
-            <img
-              src="/images/logo.png"
-              alt="Shree TBTC Global Industries"
-              className="h-16 sm:h-20 w-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)]"
-              draggable={false}
+        .tbtc-reveal-complete {
+          opacity: 0;
+          animation: 0.25s 1.55s forwards tbtc-fade-in;
+        }
+
+        .tbtc-loader-tagline {
+          margin-top: 24px;
+          font-size: 10px;
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+          letter-spacing: 0.26em;
+          color: #64748b;
+          text-transform: uppercase;
+          font-weight: 700;
+          opacity: 0;
+          animation: 0.6s 0.95s forwards tbtc-fade-in;
+          text-align: center;
+          padding: 0 16px;
+        }
+
+        @keyframes tbtc-draw-brand {
+          to {
+            stroke-dashoffset: 0;
+          }
+        }
+
+        @keyframes tbtc-fade-in {
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes tbtc-brand-pulse {
+          0% {
+            transform: scale(0.97);
+            filter: brightness(0.96);
+          }
+          50% {
+            transform: scale(1.02);
+            filter: brightness(1.06);
+          }
+          100% {
+            transform: scale(1);
+            filter: brightness(1);
+          }
+        }
+
+        @keyframes tbtc-loader-out {
+          to {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+          }
+        }
+      `}} />
+
+      <svg viewBox="0 0 500 395" className="tbtc-loader-logo">
+        <defs>
+          <mask id="tbtc-brand-reveal" maskUnits="userSpaceOnUse" x="0" y="0" width="500" height="395">
+            {/* Outline drawing strokes for TBTC emblem */}
+            <path
+              className="tbtc-reveal-emblem-1"
+              d="M 160 250 L 250 15 L 340 250 Z"
+              fill="none"
+              stroke="white"
+              strokeWidth="60"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              pathLength="1"
             />
-          </div>
-        </div>
-
-        {/* Company Title & Industrial Typography */}
-        <h1 className="text-white text-base sm:text-lg font-black font-mono tracking-widest uppercase mb-1 drop-shadow-md">
-          Shree TBTC Global Industries
-        </h1>
-        <p className="text-cyan-400 text-[10px] sm:text-[11px] font-mono tracking-widest uppercase mb-6 flex items-center justify-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping inline-block" />
-          <span>Electrical Automation & Industrial Supplies</span>
-        </p>
-
-        {/* Synchronized Loading Progress Bar */}
-        <div className="w-full max-w-xs space-y-2">
-          <div className="w-full bg-slate-900 border border-slate-800 rounded-full h-2 p-0.5 overflow-hidden shadow-inner">
-            <div
-              className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-red-500 rounded-full transition-all duration-100 ease-out shadow-[0_0_12px_rgba(56,189,248,0.7)]"
-              style={{ width: `${progress}%` }}
+            <path
+              className="tbtc-reveal-emblem-2"
+              d="M 250 5 L 250 255 M 165 125 L 335 125"
+              fill="none"
+              stroke="white"
+              strokeWidth="65"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              pathLength="1"
             />
-          </div>
-          <div className="flex justify-between items-center text-[10px] font-mono text-slate-400">
-            <span className="tracking-widest uppercase text-slate-500">INITIALIZING CORE SYSTEM</span>
-            <span className="font-bold text-cyan-400">{progress}%</span>
-          </div>
-        </div>
+            <path
+              className="tbtc-reveal-emblem-3"
+              d="M 175 45 L 325 215 M 325 45 L 175 215"
+              fill="none"
+              stroke="white"
+              strokeWidth="50"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              pathLength="1"
+            />
+            {/* Typography reveal */}
+            <rect className="tbtc-reveal-type" x="0" y="260" width="500" height="135" fill="white" />
+            {/* 100% complete fill */}
+            <rect className="tbtc-reveal-complete" width="500" height="395" fill="white" />
+          </mask>
+        </defs>
+        <image
+          href="/images/logo.png"
+          width="500"
+          height="395"
+          mask="url(#tbtc-brand-reveal)"
+        />
+      </svg>
 
-      </div>
+      <p className="tbtc-loader-tagline">
+        Electrical Automation &amp; Industrial Supplies
+      </p>
     </div>
   );
 }

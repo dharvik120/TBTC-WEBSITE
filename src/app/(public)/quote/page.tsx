@@ -243,7 +243,7 @@ export default function QuotePage() {
                   </div>
 
                   {/* Email & Phone */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-4">
                     <div>
                       <label htmlFor="email" className="block text-[10px] font-bold font-mono text-slate-400 uppercase mb-1">
                         Email Address <span className="text-red-500">*</span>
@@ -263,12 +263,12 @@ export default function QuotePage() {
                       <label htmlFor="phone" className="block text-[10px] font-bold font-mono text-slate-400 uppercase mb-1">
                         International Phone / WhatsApp <span className="text-red-500">*</span>
                       </label>
-                      <div className="flex rounded border border-slate-200 bg-slate-50 focus-within:bg-white focus-within:border-slate-400 overflow-hidden">
+                      <div className="flex rounded border border-slate-200 bg-slate-50 focus-within:bg-white focus-within:border-slate-400 overflow-hidden w-full">
                         <select
                           name="countryDialCode"
                           value={customerDetails.countryDialCode}
                           onChange={handleInputChange}
-                          className="bg-slate-100 hover:bg-slate-200 border-r border-slate-200 px-2 py-2 text-xs font-mono font-bold text-slate-800 focus:outline-none cursor-pointer shrink-0"
+                          className="w-[82px] sm:w-[90px] shrink-0 bg-slate-100 hover:bg-slate-200 border-r border-slate-200 px-2 py-2 text-xs font-mono font-bold text-slate-800 focus:outline-none cursor-pointer"
                           title="Country Calling Code"
                         >
                           {INTERNATIONAL_DIAL_CODES.map((c) => (
@@ -285,9 +285,12 @@ export default function QuotePage() {
                           value={customerDetails.phone}
                           onChange={handleInputChange}
                           placeholder="e.g. 98765 43210"
-                          className="w-full px-3 py-2 text-xs bg-transparent focus:outline-none font-mono"
+                          className="flex-1 min-w-0 w-full px-3 py-2 text-xs bg-transparent focus:outline-none font-mono"
                         />
                       </div>
+                      <span className="text-[10px] text-slate-400 mt-1 block">
+                        Selected: {customerDetails.countryDialCode}
+                      </span>
                     </div>
                   </div>
 
